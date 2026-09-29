@@ -6,6 +6,7 @@ import { BrandAuth } from "@/components/brand-auth";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { ChatPage } from "@/components/chat-page";
 import { EvolutionPage } from "@/components/evolution-page";
+import { LegalPage } from "@/components/legal-page";
 import { StudentHomePage } from "@/components/student-home-page";
 import { StudentProfilePage } from "@/components/student-profile-page";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
@@ -79,6 +80,7 @@ export default function OperationalApp() {
     if (viewer?.role === "professional" && pathname.startsWith("/aluno"))
       router.replace("/profissional");
   }, [pathname, router, viewer]);
+  if (pathname === "/termos") return <LegalPage />;
   if (publicPaths.includes(pathname as (typeof publicPaths)[number]))
     return <BrandAuth path={pathname as (typeof publicPaths)[number]} />;
   if (viewer === undefined)
