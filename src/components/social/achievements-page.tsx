@@ -11,6 +11,7 @@ import { Medal3D } from "@/components/social/medal-3d";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
 import type { Viewer } from "@/lib/evolink-data";
 import { createPost, getAchievementCatalog, getMyAchievements, levelFor, type Achievement, type Frame } from "@/lib/social-data";
+import { PageSkeleton } from "@/components/ui/skeleton";
 
 const categories: { code: Achievement["category"]; title: string }[] = [
   { code: "treino", title: "Treino" },
@@ -69,7 +70,7 @@ export function AchievementsPage({ viewer }: { viewer: Viewer }) {
     if (!error) setShared(achievement.code);
   }
 
-  if (!catalog) return <Shell profile={viewer.role}><div className="mt-6 h-72 animate-pulse rounded-3xl bg-white soft-shadow" /></Shell>;
+  if (!catalog) return <Shell profile={viewer.role}><PageSkeleton tiles={3} /></Shell>;
 
   return (
     <Shell profile={viewer.role}>

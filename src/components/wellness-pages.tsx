@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Activity, Check, Flame, Footprints, HeartPulse, Moon, Pill, Plus, Sparkles, Timer, Trash2, X } from "lucide-react";
+import { Activity, Check, Flame, Footprints, HeartPulse, Moon, Pill, Plus, Sparkles, Timer, Trash2 } from "lucide-react";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
 import { addDays, localDate, weekStart } from "@/lib/dates";
@@ -20,6 +20,7 @@ import {
   type HabitKind,
   type HabitLog,
 } from "@/lib/wellness-data";
+import { Modal } from "@/components/ui/modal";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
 const field = "mt-2 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm font-normal outline-none transition focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -174,7 +175,6 @@ function Tile({ icon: Icon, label, value, suffix = "", decimals = 0, highlight =
 }
 
 function CardioSheet({ plan, onClose, onSave }: { plan?: CardioPlan; onClose: () => void; onSave: (input: Parameters<typeof logCardio>[1]) => Promise<string | null> }) {
-  const reduceMotion = useReducedMotion();
   const [modality, setModality] = useState(plan?.modality ?? "Corrida");
   const [minutes, setMinutes] = useState(plan ? String(plan.duration_minutes) : "");
   const [distance, setDistance] = useState("");
@@ -196,20 +196,8 @@ function CardioSheet({ plan, onClose, onSave }: { plan?: CardioPlan; onClose: ()
   }
 
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-[#07352b]/40 p-0 sm:items-center sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <motion.form
-        onSubmit={submit}
-        onClick={event => event.stopPropagation()}
-        initial={reduceMotion ? false : { y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 40, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl"
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">{plan ? plan.title : "Registrar cardio"}</h2>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="grid h-9 w-9 place-items-center rounded-full hover:bg-[#f3f8f5]"><X size={18} /></button>
-        </div>
+    <Modal open onClose={onClose} title={plan ? plan.title : "Registrar cardio"} description={plan ? `${plan.modality} · ${plan.duration_minutes} min` : "Corrida, bike, esteira ou o que você fez hoje."}>
+      <form onSubmit={submit}>
         {!plan && (
           <div className="mt-4 flex flex-wrap gap-2">
             {cardioModalities.map(option => (
@@ -238,8 +226,8 @@ function CardioSheet({ plan, onClose, onSave }: { plan?: CardioPlan; onClose: ()
         </label>
         {error && <p className="mt-3 text-sm font-semibold text-[#b94242]">{error}</p>}
         <Button type="submit" disabled={saving} className="mt-5 w-full">{saving ? "Salvando..." : "Salvar atividade"}</Button>
-      </motion.form>
-    </motion.div>
+      </form>
+    </Modal>
   );
 }
 

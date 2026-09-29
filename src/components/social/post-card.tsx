@@ -7,6 +7,7 @@ import { Clock3, Dumbbell, Flame, Globe2, Heart, Lock, Medal, MessageCircle, Mor
 import { Medal3D } from "@/components/social/medal-3d";
 import { FramedAvatar } from "@/components/social/framed-avatar";
 import { addComment, deleteComment, deletePost, getComments, setLike, type Achievement, type Comment, type FeedPost } from "@/lib/social-data";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const visibilityInfo = {
   community: { icon: Globe2, label: "Comunidade" },
@@ -194,7 +195,7 @@ function Comments({ postId, postAuthorId, viewerId, onCount }: { postId: string;
 
   return (
     <div className="mt-2 space-y-3 border-t border-[#f0f4f2] pt-3">
-      {comments === null ? <p className="text-sm text-[#71837b]">Carregando...</p> : comments.map(comment => (
+      {comments === null ? <div className="space-y-2"><Skeleton className="h-12 rounded-2xl" /><Skeleton className="h-12 w-4/5 rounded-2xl" /></div> : comments.map(comment => (
         <div key={comment.id} className="group flex gap-2.5">
           <FramedAvatar author={comment.author} size="sm" />
           <div className="min-w-0 flex-1 rounded-2xl bg-[#f5f9f7] px-3 py-2">

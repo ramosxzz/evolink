@@ -8,6 +8,7 @@ import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { Reveal } from "@/components/ui/motion";
 import type { Viewer } from "@/lib/evolink-data";
 import { brazilianStates, eventKinds, getEvents, getFederations, type EventSummary, type Federation } from "@/lib/events-data";
+import { Select } from "@/components/ui/select";
 
 export function EventsPage({ viewer }: { viewer: Viewer }) {
   const router = useRouter();
@@ -61,10 +62,7 @@ export function EventsPage({ viewer }: { viewer: Viewer }) {
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         <button onClick={() => setState("")} className={chip(state === "")}>Brasil todo</button>
         <button onClick={() => setState("RS")} className={chip(state === "RS")}>Rio Grande do Sul</button>
-        <select value={state && state !== "RS" ? state : ""} onChange={event => setState(event.target.value)} className={`${chip(Boolean(state && state !== "RS"))} outline-none`}>
-          <option value="">Outro estado</option>
-          {brazilianStates.filter(uf => uf !== "RS").map(uf => <option key={uf} value={uf}>{uf}</option>)}
-        </select>
+        <Select size="sm" className="w-40 shrink-0" placeholder="Outro estado" value={state && state !== "RS" ? state : ""} onChange={setState} options={brazilianStates.filter(uf => uf !== "RS").map(uf => ({ value: uf, label: uf }))} />
       </div>
       <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
         <button onClick={() => setFederation("")} className={chip(federation === "")}>Todas as federações</button>

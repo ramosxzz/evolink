@@ -6,6 +6,7 @@ import { ArrowLeft, Camera, Check } from "lucide-react";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import type { Viewer } from "@/lib/evolink-data";
 import { bodybuildingCategories, brazilianStates, eventKinds, getEvent, getFederations, saveEvent, type EventInput, type EventKind, type Federation } from "@/lib/events-data";
+import { Select } from "@/components/ui/select";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
 const field = "mt-1.5 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm font-normal outline-none transition focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -73,16 +74,8 @@ export function EventFormPage({ viewer, eventId }: { viewer: Viewer; eventId?: s
           <section className={card}>
             <label className={label}>Nome do evento<input value={values.title} onChange={set("title")} maxLength={120} placeholder="Ex.: Campeonato Gaúcho 2027" className={field} /></label>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <label className={label}>Tipo
-                <select value={values.kind} onChange={event => setValues({ ...values, kind: event.target.value as EventKind })} className={field}>
-                  {Object.entries(eventKinds).map(([value, text]) => <option key={value} value={value}>{text}</option>)}
-                </select>
-              </label>
-              <label className={label}>Federação
-                <select value={values.federationCode} onChange={set("federationCode")} className={field}>
-                  {federations.map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
-                </select>
-              </label>
+              <Select label="Tipo" value={values.kind} onChange={kind => setValues({ ...values, kind: kind as EventKind })} options={Object.entries(eventKinds).map(([value, text]) => ({ value, label: text }))} />
+              <Select label="Federação" value={values.federationCode} onChange={federationCode => setValues({ ...values, federationCode })} options={federations.map(item => ({ value: item.code, label: item.name }))} />
             </div>
             {values.federationCode === "outra" && <label className={`${label} mt-4`}>Nome da federação<input value={values.federationOther} onChange={set("federationOther")} maxLength={80} className={field} /></label>}
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -94,9 +87,7 @@ export function EventFormPage({ viewer, eventId }: { viewer: Viewer; eventId?: s
           <section className={card}>
             <div className="grid gap-3 sm:grid-cols-[1fr_110px]">
               <label className={label}>Cidade<input value={values.city} onChange={set("city")} placeholder="Porto Alegre" className={field} /></label>
-              <label className={label}>UF
-                <select value={values.state} onChange={set("state")} className={field}>{brazilianStates.map(uf => <option key={uf}>{uf}</option>)}</select>
-              </label>
+              <Select label="UF" value={values.state} onChange={state => setValues({ ...values, state })} options={brazilianStates.map(uf => ({ value: uf, label: uf }))} />
             </div>
             <label className={`${label} mt-4`}>Local<input value={values.venue} onChange={set("venue")} placeholder="Nome do ginásio ou centro de eventos" className={field} /></label>
             <label className={`${label} mt-4`}>Endereço<input value={values.address} onChange={set("address")} className={field} /></label>

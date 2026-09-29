@@ -9,6 +9,7 @@ import { FramedAvatar } from "@/components/social/framed-avatar";
 import { PostCard } from "@/components/social/post-card";
 import type { Viewer } from "@/lib/evolink-data";
 import { createPost, getAchievementCatalog, getFeed, getPublicProfile, searchProfiles, type Achievement, type Author, type FeedPost, type Visibility } from "@/lib/social-data";
+import { Select } from "@/components/ui/select";
 
 type Tab = "community" | "following";
 
@@ -172,9 +173,7 @@ function Composer({ viewer, me }: { viewer: Viewer; me: Author | null }) {
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[#f0f4f2] pt-3">
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={event => pick(event.target.files)} className="hidden" />
         <button onClick={() => inputRef.current?.click()} disabled={files.length >= 4} aria-label="Adicionar fotos" className="grid h-9 w-9 place-items-center rounded-full text-[#087a50] transition hover:bg-[#eef6f1] disabled:opacity-40"><ImagePlus size={19} /></button>
-        <select value={visibility} onChange={event => setVisibility(event.target.value as Visibility)} className="rounded-full border border-[#dbe7e0] bg-white px-3 py-1.5 text-xs font-bold text-[#52665e] outline-none">
-          {options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
+        <Select size="sm" className="w-44" value={visibility} onChange={value => setVisibility(value as Visibility)} options={options.map(([value, label]) => ({ value, label }))} />
         <span className={`ml-auto text-xs ${text.length > 450 ? "text-[#b94242]" : "text-[#91a39b]"}`}>{text.length ? `${text.length}/500` : ""}</span>
         <Button onClick={submit} disabled={posting || (!text.trim() && !files.length)} className="px-5 py-2">{posting ? "Publicando..." : "Publicar"}</Button>
       </div>

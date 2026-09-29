@@ -15,6 +15,7 @@ import {
   type HabitGoal,
   type HabitKind,
 } from "@/lib/wellness-data";
+import { Select } from "@/components/ui/select";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
 const field = "mt-1.5 w-full rounded-xl border border-[#dbe7e0] bg-white px-3 py-2.5 text-sm font-normal outline-none transition focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -171,12 +172,12 @@ function CardioForm({ onSave, onCancel }: { onSave: (input: Parameters<typeof sa
   return (
     <form onSubmit={submit} className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-[#e2ece6] p-4">
       <label className="col-span-2 text-xs font-bold">Título<input value={values.title} onChange={set("title")} placeholder="Ex.: Cardio pós-treino" className={field} /></label>
-      <label className="text-xs font-bold">Modalidade
-        <select value={values.modality} onChange={set("modality")} className={field}>{cardioModalities.map(option => <option key={option}>{option}</option>)}</select>
-      </label>
-      <label className="text-xs font-bold">Intensidade
-        <select value={values.intensity} onChange={set("intensity")} className={field}>{intensities.map(option => <option key={option}>{option}</option>)}</select>
-      </label>
+      <div className="text-xs font-bold">Modalidade
+        <Select size="sm" className="mt-1.5" value={values.modality} onChange={value => setValues(current => ({ ...current, modality: value }))} options={cardioModalities.map(option => ({ value: option, label: option }))} />
+      </div>
+      <div className="text-xs font-bold">Intensidade
+        <Select size="sm" className="mt-1.5" value={values.intensity} onChange={value => setValues(current => ({ ...current, intensity: value }))} options={intensities.map(option => ({ value: option, label: option }))} />
+      </div>
       <label className="text-xs font-bold">Minutos<input value={values.minutes} onChange={set("minutes")} inputMode="numeric" className={field} /></label>
       <label className="text-xs font-bold">Vezes por semana<input value={values.sessions} onChange={set("sessions")} inputMode="numeric" className={field} /></label>
       <label className="col-span-2 text-xs font-bold">Orientações<input value={values.notes} onChange={set("notes")} placeholder="Ex.: FC entre 120 e 140 bpm" className={field} /></label>

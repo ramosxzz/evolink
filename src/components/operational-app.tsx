@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BrandAuth } from "@/components/brand-auth";
-import { Button, PageTitle, Shell } from "@/components/app-shell";
+import { AppFrame, Button, PageTitle, Shell } from "@/components/app-shell";
+import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
 import { ChatPage } from "@/components/chat-page";
+import { CheckinPage } from "@/components/checkin-page";
+import { DietPage } from "@/components/diet-page";
 import { EvolutionPage } from "@/components/evolution-page";
 import { EventDetailPage } from "@/components/events/event-detail-page";
 import { EventFormPage } from "@/components/events/event-form-page";
@@ -29,8 +32,6 @@ import {
   ProfessionalTemplatesPage,
 } from "@/components/professional-pages";
 import {
-  LiveCheckin,
-  LiveDiet,
   LiveProfessionalCheckins,
   LiveProfessionalDashboard,
   LiveProfessionalStudentPage,
@@ -91,12 +92,13 @@ export default function OperationalApp() {
     return <BrandAuth path={pathname as (typeof publicPaths)[number]} />;
   if (viewer === undefined)
     return (
-      <main className="min-h-[100dvh] bg-[#f7faf8] p-6">
-        <div className="mx-auto mt-32 max-w-md animate-pulse rounded-3xl bg-white p-7 shadow-sm">
-          <div className="h-4 w-28 rounded bg-[#e7f4ec]" />
-          <div className="mt-4 h-8 w-3/4 rounded bg-[#edf4f0]" />
+      <div className="min-h-[100dvh] bg-[var(--surface)]">
+        <div className="fixed inset-y-0 left-0 hidden w-[264px] border-r border-[var(--line)] bg-white p-6 lg:block">
+          <Skeleton className="h-9 w-32 rounded-xl" />
+          <div className="mt-10 space-y-3">{Array.from({ length: 8 }, (_, index) => <Skeleton key={index} className="h-9 rounded-xl" />)}</div>
         </div>
-      </main>
+        <div className="mx-auto max-w-6xl px-4 pt-24 md:px-8 lg:ml-[264px]"><PageSkeleton /></div>
+      </div>
     );
   if (!viewer) return <BrandAuth path="/login" />;
   if (viewer.role === "student" && viewer.student?.accessStatus === "suspended")
@@ -138,8 +140,16 @@ export default function OperationalApp() {
         </section>
       </main>
     );
+  return (
+    <AppFrame profile={viewer.role}>
+      <RouteContent pathname={pathname} viewer={viewer} inviteToken={searchParams.get("convite")} />
+    </AppFrame>
+  );
+}
+
+function RouteContent({ pathname, viewer, inviteToken }: { pathname: string; viewer: Viewer; inviteToken: string | null }) {
   if (pathname === "/aluno") return <StudentHomePage viewer={viewer} />;
-  if (pathname === "/aluno/dieta") return <LiveDiet viewer={viewer} />;
+  if (pathname === "/aluno/dieta") return <DietPage viewer={viewer} />;
   if (pathname === "/aluno/treino" || pathname.startsWith("/aluno/treino/"))
     return <WorkoutLogbookPage viewer={viewer} />;
   if (pathname === "/aluno/comunidade" || pathname === "/profissional/comunidade")
@@ -154,13 +164,13 @@ export default function OperationalApp() {
   }
   if (pathname.startsWith("/u/"))
     return <ProfilePage key={pathname} viewer={viewer} profileId={pathname.split("/")[2] === "me" ? viewer.id : pathname.split("/")[2] ?? ""} />;
-  if (pathname === "/aluno/check-in") return <LiveCheckin viewer={viewer} />;
+  if (pathname === "/aluno/check-in") return <CheckinPage viewer={viewer} />;
   if (pathname === "/aluno/evolucao") return <EvolutionPage viewer={viewer} />;
   if (pathname === "/aluno/cardio") return <CardioPage viewer={viewer} />;
   if (pathname === "/aluno/habitos") return <HabitsPage viewer={viewer} />;
   if (pathname === "/aluno/perfil")
     return (
-      <StudentProfilePage viewer={viewer} inviteToken={searchParams.get("convite")} />
+      <StudentProfilePage viewer={viewer} inviteToken={inviteToken} />
     );
   if (pathname === "/aluno/chat" || pathname === "/profissional/chat")
     return <ChatPage viewer={viewer} />;

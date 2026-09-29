@@ -22,7 +22,6 @@ import {
   Trash2,
   UserRound,
   Video,
-  X,
 } from "lucide-react";
 import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import {
@@ -49,6 +48,7 @@ import {
   type WorkoutTemplateContent,
 } from "@/lib/evolink-data";
 import { localDate } from "@/lib/dates";
+import { Modal } from "@/components/ui/modal";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white soft-shadow";
 const field = "mt-2 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm outline-none transition placeholder:text-[#9aaba3] focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -73,38 +73,7 @@ function Toast({ message, onDone }: { message: string; onDone: () => void }) {
 }
 
 function Dialog({ title, description, onClose, children, wide = false }: { title: string; description?: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
-  const reduceMotion = useReducedMotion();
-  return (
-    <motion.div
-      initial={reduceMotion ? false : { opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] overflow-y-auto bg-[#071d18]/45 p-3 backdrop-blur-[2px] md:p-6"
-      onMouseDown={event => event.target === event.currentTarget && onClose()}
-    >
-      <motion.section
-        initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.985 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 10, scale: 0.99 }}
-        transition={{ type: "spring", stiffness: 360, damping: 32 }}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={`mx-auto my-4 overflow-hidden rounded-3xl border border-[#dce8e1] bg-[#f8fbf9] shadow-2xl shadow-emerald-950/15 ${wide ? "max-w-4xl" : "max-w-xl"}`}
-      >
-        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[#e4ece7] bg-white/95 px-5 py-4 backdrop-blur md:px-6">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-            {description && <p className="mt-1 text-sm text-[#71837b]">{description}</p>}
-          </div>
-          <button type="button" aria-label="Fechar" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#61756d] transition hover:bg-[#eef5f1] active:scale-95">
-            <X size={19} />
-          </button>
-        </header>
-        <div className="p-5 md:p-6">{children}</div>
-      </motion.section>
-    </motion.div>
-  );
+  return <Modal open onClose={onClose} title={title} description={description} size={wide ? "lg" : "md"}>{children}</Modal>;
 }
 
 function FieldLabel({ label, children }: { label: string; children: React.ReactNode }) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { ArrowLeft, Camera, Check, Lock, MessageCircle, Pencil, Trophy, UserCheck, UserPlus } from "lucide-react";
 import { Button, Shell } from "@/components/app-shell";
 import { Medal3D } from "@/components/social/medal-3d";
@@ -23,6 +23,8 @@ import {
   type Frame,
   type PublicProfile,
 } from "@/lib/social-data";
+import { Modal } from "@/components/ui/modal";
+import { ListSkeleton, Skeleton } from "@/components/ui/skeleton";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
 
@@ -45,7 +47,7 @@ export function ProfilePage({ viewer, profileId }: { viewer: Viewer; profileId: 
     return () => { active = false; };
   }, [profileId, viewer.id]);
 
-  if (profile === undefined) return <Shell profile={viewer.role}><div className="mx-auto mt-6 h-72 max-w-2xl animate-pulse rounded-3xl bg-white soft-shadow" /></Shell>;
+  if (profile === undefined) return <Shell profile={viewer.role}><div className="mx-auto max-w-2xl space-y-4"><Skeleton className="h-64 rounded-3xl" /><Skeleton className="h-32 rounded-3xl" /><ListSkeleton rows={2} /></div></Shell>;
   if (profile === null)
     return (
       <Shell profile={viewer.role}>
@@ -167,7 +169,6 @@ function EditProfile({ profile, frames, earnedCodes, achievements, onClose, onSa
   onClose: () => void;
   onSaved: (profile: PublicProfile) => void;
 }) {
-  const reduceMotion = useReducedMotion();
   const inputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(profile.author.name);
   const [bio, setBio] = useState(profile.bio ?? "");
@@ -198,17 +199,13 @@ function EditProfile({ profile, frames, earnedCodes, achievements, onClose, onSa
   }
 
   return (
-    <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-[#07352b]/40 sm:items-center sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <motion.div
-        onClick={event => event.stopPropagation()}
-        initial={reduceMotion ? false : { y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 40, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl"
-      >
-        <h2 className="text-lg font-bold">Editar perfil</h2>
-        <div className="mt-5 flex items-center gap-4">
+    <Modal
+      open
+      onClose={onClose}
+      title="Editar perfil"
+      footer={<><Button kind="outline" onClick={onClose}>Cancelar</Button><Button onClick={save} disabled={saving || uploading}>{saving ? "Salvando..." : "Salvar"}</Button></>}
+    >
+        <div className="flex items-center gap-4">
           <button onClick={() => inputRef.current?.click()} className="group relative" aria-label="Trocar foto">
             <FramedAvatar author={{ name, avatarUrl: avatar, frame }} size="lg" />
             <span className="absolute inset-0 grid place-items-center rounded-full bg-black/40 text-white opacity-0 transition group-hover:opacity-100">{uploading ? "..." : <Camera size={20} />}</span>
@@ -244,11 +241,6 @@ function EditProfile({ profile, frames, earnedCodes, achievements, onClose, onSa
           <input type="checkbox" checked={isPublic} onChange={event => setIsPublic(event.target.checked)} className="h-5 w-5 accent-[#087a50]" />
         </label>
         {error && <p className="mt-3 text-sm font-semibold text-[#b94242]">{error}</p>}
-        <div className="mt-5 flex justify-end gap-2">
-          <Button kind="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={saving || uploading}>{saving ? "Salvando..." : "Salvar"}</Button>
-        </div>
-      </motion.div>
-    </motion.div>
+    </Modal>
   );
 }

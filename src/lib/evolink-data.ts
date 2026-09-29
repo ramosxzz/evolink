@@ -121,9 +121,9 @@ export async function markNotificationsRead(viewerId: string) {
   return createClient().from("notifications").update({ read_at: new Date().toISOString() }).eq("recipient_id", viewerId).is("read_at", null);
 }
 
-export async function saveCheckin(viewer: Viewer, values: { nutrition: number; trainingDays: number; energy: number; weight?: number; message?: string }) {
+export async function saveCheckin(viewer: Viewer, values: { nutrition: number; trainingDays: number; energy: number; sleep?: number; stress?: number; weight?: number; message?: string }) {
   if (!viewer.studentId || !viewer.counterpart) return { error: new Error("Vincule um profissional antes de enviar o check-in.") };
-  return createClient().from("check_ins").upsert({ student_id: viewer.studentId, professional_id: viewer.counterpart.id, week_of: weekStart(), nutrition_score: values.nutrition, training_days: values.trainingDays, energy_score: values.energy, current_weight_kg: values.weight ?? null, student_message: values.message ?? null, status: "submitted", submitted_at: new Date().toISOString() }, { onConflict: "student_id,week_of" });
+  return createClient().from("check_ins").upsert({ student_id: viewer.studentId, professional_id: viewer.counterpart.id, week_of: weekStart(), nutrition_score: values.nutrition, training_days: values.trainingDays, energy_score: values.energy, sleep_score: values.sleep ?? null, stress_score: values.stress ?? null, current_weight_kg: values.weight ?? null, student_message: values.message ?? null, status: "submitted", submitted_at: new Date().toISOString() }, { onConflict: "student_id,week_of" });
 }
 
 export async function getProfessionalStudents(professionalId: string) {
@@ -529,7 +529,7 @@ export async function changePassword(password: string) {
 }
 
 export async function getWeekCheckin(studentId: string) {
-  const { data } = await createClient().from("check_ins").select("id, status, professional_feedback, submitted_at, reviewed_at").eq("student_id", studentId).eq("week_of", weekStart()).maybeSingle();
+  const { data } = await createClient().from("check_ins").select("id, status, professional_feedback, submitted_at, reviewed_at, nutrition_score, training_days, energy_score, sleep_score, stress_score, current_weight_kg, student_message").eq("student_id", studentId).eq("week_of", weekStart()).maybeSingle();
   return data;
 }
 

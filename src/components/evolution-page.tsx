@@ -7,6 +7,7 @@ import { Camera, CheckCircle2, ImageIcon, Scale, Target, TrendingDown, TrendingU
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
 import { addProgressRecord, getProgress, getProgressPhotoUrls, type Viewer } from "@/lib/evolink-data";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ProgressRecord = Awaited<ReturnType<typeof getProgress>>[number];
 type Photo = { id: string; storage_path: string };
@@ -117,7 +118,7 @@ export function ProgressOverview({ studentId, target, aside }: { studentId: stri
       <Reveal index={5} className={`${card} mt-4`}>
         <h2 className="font-bold">Histórico</h2>
         {records === null ? (
-          <p className="mt-4 text-sm text-[#71837b]">Carregando registros...</p>
+          <div className="mt-4 space-y-3">{[0, 1, 2, 3].map(item => <Skeleton key={item} className="h-12 rounded-xl" />)}</div>
         ) : records.length === 0 ? (
           <p className="mt-4 text-sm text-[#71837b]">Nenhum registro ainda.</p>
         ) : (

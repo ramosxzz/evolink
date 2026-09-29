@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
-:root { --ink:#17352e; --muted:#6d7e78; --line:#e4ece8; --mint:#e8f5ee; --emerald:#087a50; --lime:#b8e986; --surface:#f7faf8; }
+:root {
+  --ink:#10291f; --muted:#5f7169; --line:#e3ebe6; --mint:#eaf5ef; --emerald:#087a50; --emerald-dark:#065f3e;
+  --lime:#b8e986; --surface:#f4f7f5; --ring:#d5efe0; --card-shadow:0 1px 2px rgba(16,46,37,.05), 0 8px 24px -12px rgba(16,46,37,.12);
+}
 * { box-sizing:border-box; }
 html { background:var(--surface); }
-body { margin:0; background:var(--surface); color:var(--ink); font-family:Arial, Helvetica, sans-serif; }
+body { margin:0; background:var(--surface); color:var(--ink); font-family:var(--font-sans), system-ui, sans-serif; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+h1, h2, h3 { letter-spacing:-0.02em; }
 button, input, textarea, select { font:inherit; }
 button { cursor:pointer; touch-action:manipulation; }
 button:not(:disabled) { transition-property:transform, background-color, border-color, color, box-shadow, opacity; transition-duration:180ms; transition-timing-function:cubic-bezier(.16,1,.3,1); }
@@ -12,7 +16,17 @@ button:not(:disabled):active { transform:translateY(1px) scale(.985); }
 ::-webkit-scrollbar-thumb { background:#c7d8d0; border-radius:99px; }
 @keyframes rise { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
 .rise { animation:rise .45s ease both; }
-.soft-shadow { box-shadow:0 12px 35px rgba(31,81,62,.08); }
+.soft-shadow { box-shadow:var(--card-shadow); }
+/* Skeleton shimmer: a light band sweeping across the placeholder. */
+@keyframes shimmer { from { background-position:150% 0 } to { background-position:-50% 0 } }
+.skeleton { background:linear-gradient(100deg,#e8efeb 30%,#f5f9f7 50%,#e8efeb 70%); background-size:250% 100%; animation:shimmer 1.4s ease-in-out infinite; }
+.tabular { font-variant-numeric:tabular-nums; }
+/* Older loading blocks use animate-pulse: render their leaf blocks as shimmer skeletons. */
+.animate-pulse { animation:none; }
+.animate-pulse:not(:has(*)), .animate-pulse > :not(:has(*)), .animate-pulse > * > :not(:has(*)) {
+  background:linear-gradient(100deg,#e8efeb 30%,#f5f9f7 50%,#e8efeb 70%) !important; background-size:250% 100% !important;
+  animation:shimmer 1.4s ease-in-out infinite; box-shadow:none !important; border-color:transparent !important;
+}
 /* Profile frames: the ring is the element's background, the photo sits on top. */
 @keyframes frame-spin { to { transform:rotate(1turn) } }
 @keyframes frame-shine { 0%,100% { opacity:.35 } 50% { opacity:.9 } }

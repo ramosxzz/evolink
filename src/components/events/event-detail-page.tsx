@@ -16,6 +16,8 @@ import {
   addRide, addTip, deleteRide, deleteTip, eventKinds, getEvent, getFeedback, getRides, getTips, inviteAudience, lodgingLinks, sendFeedback, setAttendance, setEventStatus,
   type AttendanceRole, type EventDetail, type EventRide, type EventTip, type FeedbackSummary,
 } from "@/lib/events-data";
+import { Select } from "@/components/ui/select";
+import { ListSkeleton, Skeleton } from "@/components/ui/skeleton";
 
 type Tab = "detalhes" | "hospedagem" | "caronas" | "avaliacoes";
 const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
@@ -39,7 +41,7 @@ export function EventDetailPage({ viewer, eventId }: { viewer: Viewer; eventId: 
     return () => { active = false; };
   }, [eventId, viewer.id]);
 
-  if (event === undefined) return <Shell profile={viewer.role}><div className="mt-6 h-96 animate-pulse rounded-3xl bg-white soft-shadow" /></Shell>;
+  if (event === undefined) return <Shell profile={viewer.role}><div className="space-y-4"><Skeleton className="h-64 rounded-3xl" /><div className="grid gap-4 xl:grid-cols-[1fr_340px]"><Skeleton className="h-80 rounded-3xl" /><Skeleton className="h-80 rounded-3xl" /></div></div></Shell>;
   if (event === null)
     return (
       <Shell profile={viewer.role}>
@@ -195,15 +197,15 @@ function Attendance({ event, viewer, onChange }: { event: EventDetail; viewer: V
             </button>
           ))}
           {event.categories.length > 0 && (mine === "atleta" || !mine) && (
-            <label className="block text-xs font-bold text-[#52665e]">Categoria em que vai competir
-              <select
+            <div className="text-xs font-bold text-[#52665e]">Categoria em que vai competir
+              <Select
+                size="sm"
+                className="mt-1.5"
                 value={category}
-                onChange={async next => { setCategory(next.target.value); if (mine === "atleta") { await setAttendance(event.id, viewer.id, "atleta", next.target.value); onChange(); } }}
-                className={field}
-              >
-                {event.categories.map(item => <option key={item}>{item}</option>)}
-              </select>
-            </label>
+                onChange={async next => { setCategory(next); if (mine === "atleta") { await setAttendance(event.id, viewer.id, "atleta", next); onChange(); } }}
+                options={event.categories.map(item => ({ value: item, label: item }))}
+              />
+            </div>
           )}
         </div>
       )}
@@ -278,7 +280,7 @@ function Lodging({ event, viewer }: { event: EventDetail; viewer: Viewer }) {
           <Button type="submit" className="justify-self-end px-4 py-2 text-sm">Compartilhar dica</Button>
         </form>
         <div className="mt-4 space-y-3">
-          {tips === null ? <p className="text-sm text-[#71837b]">Carregando...</p> : tips.length === 0 ? <p className="text-sm text-[#71837b]">Nenhuma dica ainda.</p> : tips.map(tip => (
+          {tips === null ? <ListSkeleton rows={2} /> : tips.length === 0 ? <p className="text-sm text-[#71837b]">Nenhuma dica ainda.</p> : tips.map(tip => (
             <article key={tip.id} className="flex gap-3 rounded-2xl bg-[#f7faf8] p-3">
               <FramedAvatar author={tip.author} size="sm" />
               <div className="min-w-0 flex-1">

@@ -7,6 +7,7 @@ import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { Reveal } from "@/components/ui/motion";
 import { changePassword, getStudentAccount, redeemProfessionalInvite, saveStudentAccount, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
+import { Select } from "@/components/ui/select";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
 const field = "mt-1.5 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm font-normal outline-none transition focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -91,13 +92,14 @@ function AccountForm({ viewer }: { viewer: Viewer }) {
       <label className="mt-4 block text-sm font-bold">Nome completo<input value={values.fullName} onChange={set("fullName")} autoComplete="name" className={field} /></label>
       <label className="mt-4 block text-sm font-bold">Telefone<input value={values.phone} onChange={set("phone")} autoComplete="tel" inputMode="tel" placeholder="(11) 99999-9999" className={field} /></label>
       <h3 className="mt-7 flex items-center gap-2 font-bold"><Target size={18} className="text-[#087a50]" />Objetivos</h3>
-      <label className="mt-4 block text-sm font-bold">Objetivo principal
-        <select value={values.goal} onChange={set("goal")} className={field}>
-          <option value="">Selecione</option>
-          {goals.map(goal => <option key={goal}>{goal}</option>)}
-          {values.goal && !goals.includes(values.goal) && <option>{values.goal}</option>}
-        </select>
-      </label>
+      <div className="mt-4">
+        <Select
+          label="Objetivo principal"
+          value={values.goal}
+          onChange={goal => setValues(current => current && { ...current, goal })}
+          options={[...goals, ...(values.goal && !goals.includes(values.goal) ? [values.goal] : [])].map(goal => ({ value: goal, label: goal }))}
+        />
+      </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <label className="text-sm font-bold">Peso meta (kg)<input value={values.target} onChange={set("target")} inputMode="decimal" placeholder="Opcional" className={field} /></label>
         <label className="text-sm font-bold">Água por dia (L)<input value={values.water} onChange={set("water")} inputMode="decimal" className={field} /></label>

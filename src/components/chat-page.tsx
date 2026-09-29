@@ -7,6 +7,7 @@ import { MessageCircle, Send } from "lucide-react";
 import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { getMessages, getProfessionalStudents, sendMessage, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Message = { id: string; sender_id: string; recipient_id: string; body: string; created_at: string };
 type Contact = { id: string; name: string; detail: string };
@@ -141,7 +142,7 @@ function Conversation({ viewer, contact }: { viewer: Viewer; contact: Contact })
         </div>
       </header>
       <div className="max-h-[60vh] flex-1 space-y-4 overflow-y-auto bg-[#fbfdfc] p-5">
-        {messages === null && <p className="text-sm text-[#71837b]">Carregando conversa...</p>}
+        {messages === null && <div className="space-y-3"><Skeleton className="h-10 w-2/3 rounded-2xl" /><Skeleton className="ml-auto h-10 w-1/2 rounded-2xl" /><Skeleton className="h-14 w-3/5 rounded-2xl" /></div>}
         {messages?.length === 0 && (
           <div className="grid place-items-center py-12 text-center text-sm text-[#71837b]">
             <MessageCircle className="mb-2 text-[#9cc7b1]" />

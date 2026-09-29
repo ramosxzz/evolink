@@ -107,18 +107,24 @@ function WorkoutCard({ data, onOpen }: { data: HomeData | null; onOpen: () => vo
       </div>
       {plan && (
         <div className="relative mt-6">
-          <div className="mb-2 flex justify-between text-xs font-bold text-emerald-100">
-            <span>{session ? `${done} de ${exercises.length} exercícios iniciados` : `${plans.length} ${plans.length === 1 ? "treino ativo" : "treinos na rotação"}`}</span>
-            <span>{exercises.length ? Math.round((done / exercises.length) * 100) : 0}%</span>
-          </div>
-          <ProgressBar value={exercises.length ? done / exercises.length : 0} className="bg-[#b8e986]" track="bg-white/20" />
-          <div className="mt-5 flex flex-wrap gap-2">
-            {exercises.slice(0, 4).map(exercise => (
+          {session ? (
+            <>
+              <div className="mb-2 flex justify-between text-xs font-semibold text-emerald-100">
+                <span>{done} de {exercises.length} exercícios iniciados</span>
+                <span className="tabular">{exercises.length ? Math.round((done / exercises.length) * 100) : 0}%</span>
+              </div>
+              <ProgressBar value={exercises.length ? done / exercises.length : 0} className="bg-[#b8e986]" track="bg-white/20" />
+            </>
+          ) : plans.length > 1 ? (
+            <p className="text-xs font-semibold text-emerald-100">{plans.length} treinos na rotação</p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {exercises.slice(0, 3).map(exercise => (
               <span key={exercise.id} className={`rounded-full px-3 py-1 text-xs font-semibold ${doneIds.has(exercise.id) ? "bg-[#b8e986] text-[#07352b]" : "bg-white/15"}`}>
                 {exercise.name}
               </span>
             ))}
-            {exercises.length > 4 && <span className="rounded-full bg-white/10 px-3 py-1 text-xs">+{exercises.length - 4}</span>}
+            {exercises.length > 3 && <span className="rounded-full bg-white/10 px-3 py-1 text-xs">+{exercises.length - 3}</span>}
           </div>
           <Button kind="soft" onClick={onOpen} className="mt-6">
             {session ? "Continuar treino" : "Começar treino"}<ArrowRight size={16} />

@@ -20,6 +20,7 @@ import {
   type Viewer,
   type WorkoutTemplateContent,
 } from "@/lib/evolink-data";
+import { Select } from "@/components/ui/select";
 
 type Kind = "workout" | "diet";
 type ExerciseRow = { key: string; name: string; muscleGroup: string; sets: string; reps: string; rest: string; load: string; notes: string; videoUrl: string };
@@ -163,18 +164,9 @@ export function PlanBuilder({ viewer, kind }: { viewer: Viewer; kind: Kind }) {
       <div className="mt-7 grid gap-4 xl:grid-cols-[320px_1fr]">
         <aside className="space-y-4">
           <section className={card}>
-            <label className={label}>Aluno
-              <select value={studentId} onChange={event => setStudentId(event.target.value)} className={`${field} mt-1.5`} disabled={!students}>
-                {students === null ? <option>Carregando...</option> : students.length === 0 ? <option value="">Nenhum aluno ativo</option> : students.map(student => <option key={student.id} value={student.id}>{student.name}</option>)}
-              </select>
-            </label>
+            <Select label="Aluno" value={studentId} onChange={setStudentId} disabled={!students?.length} placeholder={students === null ? "Carregando..." : "Nenhum aluno ativo"} options={(students ?? []).map(student => ({ value: student.id, label: student.name }))} />
             {templates.length > 0 && (
-              <label className={`${label} mt-4 block`}>Começar de um modelo
-                <select defaultValue="" onChange={event => applyTemplate(event.target.value)} className={`${field} mt-1.5`}>
-                  <option value="" disabled>Escolher modelo</option>
-                  {templates.map(template => <option key={template.id} value={template.id}>{template.title}</option>)}
-                </select>
-              </label>
+              <Select label="Começar de um modelo" className="mt-4" value="" placeholder="Escolher modelo" onChange={applyTemplate} options={templates.map(template => ({ value: template.id, label: template.title }))} />
             )}
             <label className={`${label} mt-4 block`}>Título<input value={title} onChange={event => setTitle(event.target.value)} className={`${field} mt-1.5`} /></label>
             <label className={`${label} mt-4 block`}>{kind === "workout" ? "Objetivo" : "Orientações gerais"}
@@ -286,10 +278,7 @@ function ExerciseItem({ row, index, onChange, onDuplicate, onRemove }: { row: Ex
         <span className="mt-2 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#087a50] text-xs font-bold text-white">{index + 1}</span>
         <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[1fr_150px]">
           <input value={row.name} onChange={set("name")} list="exercise-suggestions" placeholder="Nome do exercício" className={`${field} font-semibold`} />
-          <select value={row.muscleGroup} onChange={set("muscleGroup")} className={field}>
-            <option value="">Grupo muscular</option>
-            {muscleGroups.map(group => <option key={group}>{group}</option>)}
-          </select>
+          <Select value={row.muscleGroup} onChange={muscleGroup => onChange({ muscleGroup })} placeholder="Grupo muscular" options={muscleGroups.map(group => ({ value: group, label: group }))} />
           <div className="grid grid-cols-4 gap-2 sm:col-span-2">
             <label className={label}>Séries<input value={row.sets} onChange={set("sets")} inputMode="numeric" className={`${field} mt-1`} /></label>
             <label className={label}>Reps<input value={row.reps} onChange={set("reps")} placeholder="8-10" className={`${field} mt-1`} /></label>
