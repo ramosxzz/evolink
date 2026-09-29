@@ -32,7 +32,7 @@ import {
 import { getViewer, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
 
-const publicPaths = ["/", "/login", "/cadastro", "/recuperar-senha"] as const;
+const publicPaths = ["/", "/login", "/cadastro", "/recuperar-senha", "/redefinir-senha"] as const;
 
 export default function OperationalApp() {
   const pathname = usePathname();
@@ -52,7 +52,12 @@ export default function OperationalApp() {
     return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    if (viewer && publicPaths.includes(pathname as (typeof publicPaths)[number]))
+    // The recovery link signs the user in; keep them on the new-password form.
+    if (
+      viewer &&
+      pathname !== "/redefinir-senha" &&
+      publicPaths.includes(pathname as (typeof publicPaths)[number])
+    )
       router.replace(
         viewer.role === "professional" ? "/profissional" : "/aluno",
       );

@@ -7,7 +7,7 @@ import { AlertCircle, ArrowRight, CheckCircle2, LockKeyhole, Mail, UserRound } f
 import { motion, useReducedMotion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
 
-type AuthPath = "/" | "/login" | "/cadastro" | "/recuperar-senha";
+type AuthPath = "/" | "/login" | "/cadastro" | "/recuperar-senha" | "/redefinir-senha";
 
 export function BrandAuth({ path }: { path: AuthPath }) {
   const router = useRouter();
@@ -17,6 +17,7 @@ export function BrandAuth({ path }: { path: AuthPath }) {
   const [accountRole, setAccountRole] = useState<"student" | "professional">("student");
   const signup = path === "/cadastro";
   const recovery = path === "/recuperar-senha";
+  const reset = path === "/redefinir-senha";
 
   async function submit(form: FormData) {
     setLoading(true); setFeedback(null);
@@ -26,9 +27,18 @@ export function BrandAuth({ path }: { path: AuthPath }) {
     const supabase = createClient();
     try {
       if (recovery) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login` });
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/redefinir-senha` });
         if (error) throw error;
-        setFeedback({ kind: "success", message: "Enviamos um link para redefinir sua senha." }); return;
+        setFeedback({ kind: "success", message: "Se houver uma conta com esse e-mail, você vai receber um link para criar uma nova senha." }); return;
+      }
+      if (reset) {
+        if (password.length < 8) throw new Error("A senha precisa ter pelo menos 8 caracteres.");
+        if (password !== String(form.get("passwordConfirm") || "")) throw new Error("As senhas não conferem.");
+        const { data, error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+        router.replace(profile?.role === "professional" ? "/profissional" : "/aluno");
+        return;
       }
       if (signup) {
         if (fullName.length < 2) throw new Error("Informe seu nome completo.");
@@ -54,14 +64,19 @@ export function BrandAuth({ path }: { path: AuthPath }) {
           ? "Este e-mail já possui uma conta. Entre com sua senha."
           : rawMessage.includes("rate limit")
             ? "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente."
-            : rawMessage;
+            : rawMessage.includes("session missing") || rawMessage.includes("expired")
+              ? "Este link expirou ou já foi usado. Solicite um novo em Esqueci minha senha."
+              : rawMessage.includes("should be different")
+                ? "A nova senha precisa ser diferente da atual."
+                : rawMessage;
       setFeedback({ kind: "error", message });
     }
     finally { setLoading(false); }
   }
 
   const ease = [0.22, 1, 0.36, 1] as const;
-  const reveal = reduceMotion ? {} : { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, transition: { duration: .48, ease } };
+  // Slide only: starting at opacity 0 left the form invisible until hydration finished.
+  const reveal = reduceMotion ? {} : { initial: { y: 18 }, animate: { y: 0 }, transition: { duration: .48, ease } };
   return <main className="grid min-h-[100dvh] bg-[#061d19] text-white lg:grid-cols-[1.15fr_.85fr]">
     <motion.section {...reveal} className="relative hidden overflow-hidden lg:block">
       <Image src="/brand/evolink-logo.png" alt="Evolink" fill priority sizes="(min-width: 1024px) 58vw, 0px" className="object-cover opacity-80" />
@@ -73,24 +88,26 @@ export function BrandAuth({ path }: { path: AuthPath }) {
       <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#90e6a4]/45 blur-3xl" /><div className="absolute -bottom-20 -left-24 h-64 w-64 rounded-full bg-[#0ba273]/20 blur-3xl" />
       <div className="relative w-full max-w-[390px]">
         <button onClick={() => router.push("/")} className="mb-12 flex items-center gap-3 text-left"><span className="relative h-10 w-10 overflow-hidden rounded-2xl bg-[#07352b] shadow-lg shadow-emerald-950/20"><Image src="/brand/evolink-mark-192.png" alt="Evolink" fill sizes="40px" className="scale-125 object-cover"/></span><span className="text-xl font-bold tracking-tight">Evolink</span></button>
-        <motion.p {...reveal} className="text-xs font-bold tracking-[.18em] text-[#07845a]">{recovery ? "RECUPERAR ACESSO" : signup ? "COMECE AGORA" : "BEM-VINDO DE VOLTA"}</motion.p>
-        <motion.h2 {...reveal} transition={{ delay: reduceMotion ? 0 : .05, duration: .48, ease }} className="mt-2 text-3xl font-bold tracking-tight">{recovery ? "Vamos te ajudar a entrar." : signup ? "Crie sua conta." : "Entre no seu ritmo."}</motion.h2>
-        <p className="mt-3 text-sm leading-relaxed text-[#5f746d]">{recovery ? "Digite seu e-mail e enviaremos um link seguro." : signup ? "Seu primeiro passo para uma evolução sustentável." : "Acompanhe sua rotina e mantenha o foco no que importa."}</p>
+        <motion.p {...reveal} className="text-xs font-bold tracking-[.18em] text-[#07845a]">{reset ? "NOVA SENHA" : recovery ? "RECUPERAR ACESSO" : signup ? "COMECE AGORA" : "BEM-VINDO DE VOLTA"}</motion.p>
+        <motion.h2 {...reveal} transition={{ delay: reduceMotion ? 0 : .05, duration: .48, ease }} className="mt-2 text-3xl font-bold tracking-tight">{reset ? "Defina sua nova senha." : recovery ? "Vamos te ajudar a entrar." : signup ? "Crie sua conta." : "Entre no seu ritmo."}</motion.h2>
+        <p className="mt-3 text-sm leading-relaxed text-[#5f746d]">{reset ? "Escolha uma senha com pelo menos 8 caracteres." : recovery ? "Digite seu e-mail e enviaremos um link seguro." : signup ? "Seu primeiro passo para uma evolução sustentável." : "Acompanhe sua rotina e mantenha o foco no que importa."}</p>
         <form action={submit} className="mt-8 space-y-4">
           {signup && <><Input name="fullName" label="Nome completo" placeholder="Como podemos te chamar?" icon={UserRound} /><div><p className="mb-2 text-sm font-bold">Como você vai usar o Evolink?</p><div className="grid grid-cols-2 gap-3"><button type="button" onClick={() => setAccountRole("student")} className={`rounded-xl border p-3 text-left text-sm font-bold ${accountRole === "student" ? "border-[#07845a] bg-[#e8f8ed] text-[#076841]" : "border-[#d6e4dc] bg-white text-[#5f746d]"}`}>Sou aluno</button><button type="button" onClick={() => setAccountRole("professional")} className={`rounded-xl border p-3 text-left text-sm font-bold ${accountRole === "professional" ? "border-[#07845a] bg-[#e8f8ed] text-[#076841]" : "border-[#d6e4dc] bg-white text-[#5f746d]"}`}>Sou profissional</button></div></div></>}
-          <Input name="email" label="E-mail" placeholder="voce@email.com" type="email" icon={Mail} />
-          {!recovery && <Input name="password" label="Senha" placeholder="Mínimo de 8 caracteres" type="password" icon={LockKeyhole} minLength={8} />}
+          {!reset && <Input name="email" label="E-mail" placeholder="voce@email.com" type="email" icon={Mail} />}
+          {!recovery && <Input name="password" label={reset ? "Nova senha" : "Senha"} placeholder="Mínimo de 8 caracteres" type="password" icon={LockKeyhole} minLength={8} autoComplete={signup || reset ? "new-password" : "current-password"} />}
+          {reset && <Input name="passwordConfirm" label="Confirme a nova senha" placeholder="Repita a senha" type="password" icon={LockKeyhole} minLength={8} autoComplete="new-password" />}
           {signup && <label className="flex gap-3 rounded-xl bg-white/70 p-3 text-xs leading-relaxed text-[#5f746d]"><input required type="checkbox" className="mt-0.5 accent-[#07845a]"/>Li e aceito os termos de uso e a política de privacidade.</label>}
-          {!signup && !recovery && <div className="flex justify-between text-sm"><label className="flex items-center gap-2 text-[#5f746d]"><input type="checkbox" className="accent-[#07845a]"/>Lembrar acesso</label><button type="button" onClick={() => router.push("/recuperar-senha")} className="font-bold text-[#07845a]">Esqueci minha senha</button></div>}
-          <motion.button whileTap={reduceMotion ? undefined : { scale: .98 }} disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#07845a] px-5 py-4 text-sm font-bold text-white shadow-xl shadow-emerald-950/15 transition hover:bg-[#066a49] active:scale-[.98] disabled:opacity-60">{loading ? "Aguarde..." : recovery ? "Enviar link" : signup ? "Criar minha conta" : "Entrar no Evolink"}<ArrowRight size={17}/></motion.button>
+          {!signup && !recovery && !reset && <div className="flex justify-end text-sm"><button type="button" onClick={() => router.push("/recuperar-senha")} className="font-bold text-[#07845a]">Esqueci minha senha</button></div>}
+          <motion.button whileTap={reduceMotion ? undefined : { scale: .98 }} disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#07845a] px-5 py-4 text-sm font-bold text-white shadow-xl shadow-emerald-950/15 transition hover:bg-[#066a49] active:scale-[.98] disabled:opacity-60">{loading ? "Aguarde..." : reset ? "Salvar nova senha" : recovery ? "Enviar link" : signup ? "Criar minha conta" : "Entrar no Evolink"}<ArrowRight size={17}/></motion.button>
         </form>
         {feedback && <motion.p role="status" initial={reduceMotion ? false : { opacity: 0, scale: .96, y: 6 }} animate={{ opacity: 1, scale: 1, y: 0 }} className={`mt-4 flex gap-2 rounded-xl border p-3 text-sm ${feedback.kind === "success" ? "border-[#b7dfca] bg-[#e8f8ed] text-[#176340]" : "border-[#efc9c5] bg-[#fff1ef] text-[#9b342c]"}`}>{feedback.kind === "success" ? <CheckCircle2 size={18} className="shrink-0"/> : <AlertCircle size={18} className="shrink-0"/>}{feedback.message}</motion.p>}
-        {!recovery && <p className="mt-7 text-center text-sm text-[#5f746d]">{signup ? "Já tem uma conta?" : "Ainda não faz parte?"} <button onClick={() => router.push(signup ? "/login" : "/cadastro")} className="font-bold text-[#07845a]">{signup ? "Entrar" : "Criar conta"}</button></p>}
+        {(recovery || reset) && <p className="mt-7 text-center text-sm text-[#5f746d]"><button onClick={() => router.push("/login")} className="font-bold text-[#07845a]">Voltar para o login</button></p>}
+        {!recovery && !reset && <p className="mt-7 text-center text-sm text-[#5f746d]">{signup ? "Já tem uma conta?" : "Ainda não faz parte?"} <button onClick={() => router.push(signup ? "/login" : "/cadastro")} className="font-bold text-[#07845a]">{signup ? "Entrar" : "Criar conta"}</button></p>}
       </div>
     </motion.section>
   </main>;
 }
 
-function Input({ name, label, placeholder, type = "text", icon: Icon, minLength }: { name: string; label: string; placeholder: string; type?: string; icon: typeof Mail; minLength?: number }) {
-  return <label className="block"><span className="mb-2 block text-sm font-bold">{label}</span><span className="flex items-center gap-3 rounded-xl border border-[#d6e4dc] bg-white px-4 transition focus-within:border-[#07845a] focus-within:ring-4 focus-within:ring-[#d7f0df]"><Icon size={18} className="text-[#6e8a7e]"/><input required name={name} type={type} minLength={minLength} autoComplete={type === "password" ? "current-password" : name === "email" ? "email" : "name"} placeholder={placeholder} className="w-full bg-transparent py-3.5 text-sm outline-none placeholder:text-[#9aaca4]"/></span></label>;
+function Input({ name, label, placeholder, type = "text", icon: Icon, minLength, autoComplete }: { name: string; label: string; placeholder: string; type?: string; icon: typeof Mail; minLength?: number; autoComplete?: string }) {
+  return <label className="block"><span className="mb-2 block text-sm font-bold">{label}</span><span className="flex items-center gap-3 rounded-xl border border-[#d6e4dc] bg-white px-4 transition focus-within:border-[#07845a] focus-within:ring-4 focus-within:ring-[#d7f0df]"><Icon size={18} className="text-[#6e8a7e]"/><input required name={name} type={type} minLength={minLength} autoComplete={autoComplete ?? (type === "password" ? "current-password" : name === "email" ? "email" : "name")} placeholder={placeholder} className="w-full bg-transparent py-3.5 text-sm outline-none placeholder:text-[#9aaca4]"/></span></label>;
 }
