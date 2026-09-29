@@ -13,4 +13,17 @@ button:not(:disabled):active { transform:translateY(1px) scale(.985); }
 @keyframes rise { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
 .rise { animation:rise .45s ease both; }
 .soft-shadow { box-shadow:0 12px 35px rgba(31,81,62,.08); }
+/* Profile frames: the ring is the element's background, the photo sits on top. */
+@keyframes frame-spin { to { transform:rotate(1turn) } }
+@keyframes frame-shine { 0%,100% { opacity:.35 } 50% { opacity:.9 } }
+.frame-ring { position:relative; border-radius:9999px; padding:3px; isolation:isolate; }
+.frame-ring::before { content:""; position:absolute; inset:0; border-radius:inherit; z-index:-1; }
+.frame-bronze::before { background:linear-gradient(135deg,#f0b27a,#a0522d,#e8a066); }
+.frame-silver::before { background:linear-gradient(135deg,#f4f6f8,#9aa5ae,#e3e8ec); }
+.frame-gold::before { background:linear-gradient(135deg,#ffe28a,#c99700,#fff1b8,#b98900); }
+.frame-runner::before { background:conic-gradient(from 0deg,#0bbf86,#b8e986,#0bbf86,#087a50,#0bbf86); animation:frame-spin 6s linear infinite; }
+.frame-fire::before { background:conic-gradient(from 0deg,#ff6a00,#ffd000,#ff2d55,#ff6a00); animation:frame-spin 3s linear infinite; }
+.frame-diamond::before { background:conic-gradient(from 0deg,#7de2ff,#b388ff,#e0f7ff,#7de2ff); animation:frame-spin 5s linear infinite; }
+.frame-champion::before { background:conic-gradient(from 0deg,#fff1b8,#ffcc33,#b98900,#fff6d6,#ffcc33,#fff1b8); animation:frame-spin 2.5s linear infinite; }
+.frame-champion::after { content:""; position:absolute; inset:-6px; border-radius:inherit; z-index:-2; background:radial-gradient(circle,#ffd86a 0%,transparent 70%); animation:frame-shine 2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { *,::before,::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } }

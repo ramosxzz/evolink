@@ -48,23 +48,6 @@ export type WorkoutSession = {
   pr_count: number;
 };
 
-export type CommunityPost = {
-  id: string;
-  author_id: string;
-  caption: string | null;
-  visibility: "coach" | "community";
-  workout_title: string;
-  duration_seconds: number;
-  total_volume_kg: number;
-  total_sets: number;
-  pr_count: number;
-  exercise_summary: { name: string; sets: number; bestLoad: number }[];
-  created_at: string;
-  authorName: string;
-  likeCount: number;
-  likedByViewer: boolean;
-};
-
 export type WorkoutOption = { id: string; title: string; exerciseCount: number; lastCompletedAt: string | null; daysSinceCompleted: number | null };
 
 /**
@@ -216,13 +199,7 @@ export async function completeWorkout(input: {
   if (error) return { error, postError: null };
   if (!input.publish) return { error: null, postError: null };
 
-  const { error: profileError } = await supabase.from("social_profiles").upsert({
-    id: input.viewer.id,
-    display_name: input.viewer.fullName,
-    is_public: true,
-  });
-  if (profileError) return { error: null, postError: profileError };
-
+  // Every user already has a social profile (created by a database trigger).
   const { error: postError } = await supabase.from("social_posts").insert({
     author_id: input.viewer.id,
     workout_log_id: input.session.id,
@@ -236,41 +213,5 @@ export async function completeWorkout(input: {
     exercise_summary: input.exerciseSummary,
   });
   return { error: null, postError };
-}
-
-export async function getCommunityFeed(viewerId: string) {
-  const { data, error } = await createClient()
-    .from("social_posts")
-    .select("id, author_id, caption, visibility, workout_title, duration_seconds, total_volume_kg, total_sets, pr_count, exercise_summary, created_at, social_profiles!social_posts_author_id_fkey(display_name), social_post_likes(user_id)")
-    .order("created_at", { ascending: false })
-    .limit(50);
-  if (error) return { posts: [] as CommunityPost[], error };
-  const posts = (data ?? []).map((post) => {
-    const profile = post.social_profiles as unknown as { display_name: string } | null;
-    const likes = (post.social_post_likes ?? []) as { user_id: string }[];
-    return {
-      id: post.id,
-      author_id: post.author_id,
-      caption: post.caption,
-      visibility: post.visibility as CommunityPost["visibility"],
-      workout_title: post.workout_title,
-      duration_seconds: post.duration_seconds,
-      total_volume_kg: Number(post.total_volume_kg),
-      total_sets: post.total_sets,
-      pr_count: post.pr_count,
-      exercise_summary: (post.exercise_summary ?? []) as CommunityPost["exercise_summary"],
-      created_at: post.created_at,
-      authorName: profile?.display_name ?? "Atleta Evolink",
-      likeCount: likes.length,
-      likedByViewer: likes.some((like) => like.user_id === viewerId),
-    };
-  });
-  return { posts, error: null };
-}
-
-export async function togglePostLike(postId: string, userId: string, liked: boolean) {
-  const supabase = createClient();
-  if (liked) return supabase.from("social_post_likes").delete().eq("post_id", postId).eq("user_id", userId);
-  return supabase.from("social_post_likes").insert({ post_id: postId, user_id: userId });
 }
 

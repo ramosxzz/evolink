@@ -11,7 +11,10 @@ import { PlanBuilder } from "@/components/plan-builder";
 import { StudentHomePage } from "@/components/student-home-page";
 import { StudentProfilePage } from "@/components/student-profile-page";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
-import { CommunityFeedPage, WorkoutLogbookPage } from "@/components/workout-logbook-page";
+import { WorkoutLogbookPage } from "@/components/workout-logbook-page";
+import { AchievementsPage } from "@/components/social/achievements-page";
+import { FeedPage } from "@/components/social/feed-page";
+import { ProfilePage } from "@/components/social/profile-page";
 import {
   CardioPage,
   HabitsPage,
@@ -137,7 +140,10 @@ export default function OperationalApp() {
   if (pathname === "/aluno/treino" || pathname.startsWith("/aluno/treino/"))
     return <WorkoutLogbookPage viewer={viewer} />;
   if (pathname === "/aluno/comunidade" || pathname === "/profissional/comunidade")
-    return <CommunityFeedPage viewer={viewer} />;
+    return <FeedPage viewer={viewer} />;
+  if (pathname === "/conquistas") return <AchievementsPage viewer={viewer} />;
+  if (pathname.startsWith("/u/"))
+    return <ProfilePage key={pathname} viewer={viewer} profileId={pathname.split("/")[2] ?? ""} />;
   if (pathname === "/aluno/check-in") return <LiveCheckin viewer={viewer} />;
   if (pathname === "/aluno/evolucao") return <EvolutionPage viewer={viewer} />;
   if (pathname === "/aluno/cardio") return <CardioPage viewer={viewer} />;

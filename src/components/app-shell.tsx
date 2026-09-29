@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Apple, Bell, BellRing, BookOpen, CircleDollarSign, ClipboardCheck, Dumbbell, HeartPulse, Home, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Settings, Target, TrendingDown, Users, X } from "lucide-react";
+import { Apple, Bell, BellRing, BookOpen, CircleDollarSign, ClipboardCheck, Dumbbell, Globe2, HeartPulse, Home, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Settings, Target, TrendingDown, Trophy, Users, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { getNotifications, getViewer, markNotificationsRead } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
 
 type Profile = "student" | "professional";
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
-const navStudent = [["Início","/aluno",Home],["Dieta","/aluno/dieta",Apple],["Treino","/aluno/treino",Dumbbell],["Comunidade","/aluno/comunidade",Users],["Cardio","/aluno/cardio",HeartPulse],["Hábitos","/aluno/habitos",Target],["Evolução","/aluno/evolucao",TrendingDown],["Perfil","/aluno/perfil",Settings]] as const;
-const navPro = [["Visão geral","/profissional",LayoutDashboard],["Alunos","/profissional/alunos",Users],["Comunidade","/profissional/comunidade",Users],["CRM e lembretes","/profissional/crm",BellRing],["Financeiro","/profissional/financeiro",CircleDollarSign],["Dietas","/profissional/dietas",Apple],["Treinos","/profissional/treinos",Dumbbell],["Modelos","/profissional/modelos",BookOpen],["Check-ins","/profissional/check-ins",ClipboardCheck],["Chat","/profissional/chat",MessageCircle],["Biblioteca","/profissional/biblioteca/exercicios",BookOpen],["Configurações","/profissional/configuracoes",Settings]] as const;
+const navStudent = [["Início","/aluno",Home],["Dieta","/aluno/dieta",Apple],["Treino","/aluno/treino",Dumbbell],["Comunidade","/aluno/comunidade",Globe2],["Cardio","/aluno/cardio",HeartPulse],["Hábitos","/aluno/habitos",Target],["Evolução","/aluno/evolucao",TrendingDown],["Conquistas","/conquistas",Trophy],["Perfil","/aluno/perfil",Settings]] as const;
+const navPro = [["Visão geral","/profissional",LayoutDashboard],["Alunos","/profissional/alunos",Users],["Comunidade","/profissional/comunidade",Globe2],["CRM e lembretes","/profissional/crm",BellRing],["Financeiro","/profissional/financeiro",CircleDollarSign],["Dietas","/profissional/dietas",Apple],["Treinos","/profissional/treinos",Dumbbell],["Modelos","/profissional/modelos",BookOpen],["Check-ins","/profissional/check-ins",ClipboardCheck],["Chat","/profissional/chat",MessageCircle],["Biblioteca","/profissional/biblioteca/exercicios",BookOpen],["Configurações","/profissional/configuracoes",Settings]] as const;
 
 function Mark({ small=false}:{small?:boolean}){return <div className={`${small?"h-8 w-8":"h-11 w-11"} relative overflow-hidden rounded-2xl bg-[#07352b] shadow-lg shadow-emerald-900/15`}><Image src="/brand/evolink-mark-192.png" alt="Evolink" fill sizes={small?"32px":"44px"} className="scale-125 object-cover"/></div>}
 function Avatar({name, className=""}:{name:string,className?:string}){const letters=name.split(" ").map(x=>x[0]).slice(0,2).join("");return <div className={`grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-[#b8e986] to-[#51aa83] text-xs font-bold text-[#174237] ${className}`}>{letters}</div>}

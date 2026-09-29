@@ -10,7 +10,6 @@ import {
   Download,
   Dumbbell,
   Flame,
-  Heart,
   LockKeyhole,
   Medal,
   Play,
@@ -26,13 +25,10 @@ import { Button, PageTitle, Shell } from "@/components/app-shell";
 import type { Viewer } from "@/lib/evolink-data";
 import {
   completeWorkout,
-  getCommunityFeed,
   getLogbook,
   removeWorkoutSet,
   saveWorkoutSet,
   startWorkout,
-  togglePostLike,
-  type CommunityPost,
   type LogbookExercise,
   type WorkoutOption,
   type WorkoutSession,
@@ -422,24 +418,6 @@ function EmptyWorkout() { return <section className="mt-7 max-w-xl rounded-3xl b
 function wrapCanvasText(context: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) { const words = text.split(" "); let line = ""; let currentY = y; for (const word of words) { const test = `${line}${word} `; if (context.measureText(test).width > maxWidth && line) { context.fillText(line.trim(), x, currentY); line = `${word} `; currentY += lineHeight; } else line = test; } context.fillText(line.trim(), x, currentY); }
 function roundedRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) { context.beginPath(); context.roundRect(x, y, width, height, radius); }
 
-export function CommunityFeedPage({ viewer }: { viewer: Viewer }) {
-  const [posts, setPosts] = useState<CommunityPost[] | null>(null);
-  const [error, setError] = useState("");
-  const [updating, setUpdating] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    getCommunityFeed(viewer.id).then((result) => {
-      if (!active) return;
-      setError(result.error?.message ?? "");
-      setPosts(result.posts);
-    });
-    return () => { active = false; };
-  }, [viewer.id]);
-  async function like(post: CommunityPost) { setUpdating(post.id); const response = await togglePostLike(post.id, viewer.id, post.likedByViewer); setUpdating(null); if (response.error) { setError(response.error.message); return; } setPosts((current) => current?.map((item) => item.id === post.id ? { ...item, likedByViewer: !item.likedByViewer, likeCount: item.likeCount + (item.likedByViewer ? -1 : 1) } : item) ?? null); }
-  return <Shell profile={viewer.role}><div className="mx-auto max-w-3xl"><PageTitle kicker="COMUNIDADE" title="Evolução compartilhada" text="Treinos reais, constância e conquistas de quem está fazendo acontecer." />{error && <p role="alert" className="mt-5 rounded-2xl bg-[#fdebea] p-4 text-sm font-semibold text-[#9f3535]">{error}</p>}{posts === null ? <LoadingState /> : posts.length === 0 ? <section className="mt-7 rounded-[2rem] border border-[#e2ece6] bg-white p-8 text-center"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#e7f4ec] text-[#087a50]"><Users /></span><h2 className="mt-4 text-xl font-bold">A comunidade começa no próximo treino</h2><p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[#71837b]">Ao concluir um treino, o aluno pode publicar um resumo para o treinador ou para toda a comunidade.</p></section> : <div className="mt-7 space-y-5">{posts.map((post) => <article key={post.id} className="overflow-hidden rounded-[2rem] border border-[#e2ece6] bg-white soft-shadow"><header className="flex items-center gap-3 p-5"><span className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-[#b8e986] to-[#51aa83] text-sm font-black text-[#174237]">{post.authorName.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><span className="min-w-0 flex-1"><b className="block truncate">{post.authorName}</b><span className="text-xs text-[#71837b]">{new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(post.created_at))}</span></span><span className="inline-flex items-center gap-1 rounded-full bg-[#f3f8f5] px-2.5 py-1 text-[10px] font-bold text-[#52665e]">{post.visibility === "coach" ? <><LockKeyhole size={11} /> EQUIPE</> : <><Users size={11} /> COMUNIDADE</>}</span></header><section className="bg-[#07352b] p-5 text-white md:p-7"><div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-bold tracking-[.16em] text-[#b8e986]">TREINO CONCLUÍDO</p><h2 className="mt-2 text-2xl font-black tracking-tight">{post.workout_title}</h2></div>{post.pr_count > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-[#b8e986] px-3 py-1.5 text-xs font-black text-[#174237]"><Medal size={14} /> {post.pr_count} PR</span>}</div><div className="mt-6 grid grid-cols-3 gap-2"><FeedStat label="Tempo" value={formatDuration(post.duration_seconds)} /><FeedStat label="Séries" value={String(post.total_sets)} /><FeedStat label="Volume" value={formatVolume(post.total_volume_kg)} /></div></section>{post.caption && <p className="px-5 pt-5 text-sm leading-relaxed text-[#405b52]">{post.caption}</p>}{post.exercise_summary.length > 0 && <div className="mx-5 mt-4 flex gap-2 overflow-x-auto pb-1">{post.exercise_summary.slice(0, 4).map((exercise) => <span key={exercise.name} className="shrink-0 rounded-xl bg-[#f3f8f5] px-3 py-2 text-xs font-semibold text-[#52665e]">{exercise.name} · {exercise.sets} séries</span>)}</div>}<footer className="mt-4 flex items-center border-t border-[#edf2ef] p-3"><button disabled={updating === post.id} onClick={() => void like(post)} aria-pressed={post.likedByViewer} className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition active:scale-95 ${post.likedByViewer ? "bg-[#e7f4ec] text-[#087a50]" : "text-[#61756d] hover:bg-[#f3f8f5]"}`}><Heart size={18} fill={post.likedByViewer ? "currentColor" : "none"} /> {post.likeCount ? post.likeCount : "Curtir"}</button><span className="ml-auto inline-flex items-center gap-1 text-xs text-[#91a39b]"><Sparkles size={13} /> Evolink</span></footer></article>)}</div>}</div></Shell>;
-}
-
-function FeedStat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-white/10 p-3"><b className="block text-lg">{value}</b><span className="text-[9px] font-bold tracking-[.1em] text-[#b8e986]">{label.toUpperCase()}</span></div>; }
 
 function PlanSwitcher({ plans, selectedId, suggestedId, onSelect }: { plans: WorkoutOption[]; selectedId: string; suggestedId: string | null; onSelect: (id: string) => void }) {
   const since = (days: number | null) => (days === null ? "Ainda não feito" : days === 0 ? "Feito hoje" : days === 1 ? "Feito ontem" : `Há ${days} dias`);
