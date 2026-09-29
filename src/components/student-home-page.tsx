@@ -135,31 +135,94 @@ function WorkoutCard({ data, onOpen }: { data: HomeData | null; onOpen: () => vo
   );
 }
 
-function WaterCard({ water, goal, onAdd }: { water: number | null; goal: number; onAdd: (amount: number) => void }) {
-  const reduceMotion = useReducedMotion();
-  const ratio = water === null ? 0 : water / goal;
+// One sine period drawn twice, so sliding it by half its width loops seamlessly.
+const wavePath = (amplitude: number) => {
+  let d = "M0 20";
+  for (let x = 0; x <= 400; x += 10) d += ` L${x} ${20 + Math.sin((x / 200) * Math.PI * 2) * amplitude}`;
+  return `${d} L400 40 L0 40 Z`;
+};
+const backWave = wavePath(6);
+const frontWave = wavePath(4.5);
+
+/** The card is the glass: water rises to the day's share of the goal. */
+function WaterFill({ level, splash, reduceMotion }: { level: number; splash: number; reduceMotion: boolean }) {
+  // A thin layer stays visible when empty, hinting the card fills up.
+  const height = `${Math.max(0.05, Math.min(1, level)) * 100}%`;
   return (
-    <section className={`${card} h-full`}>
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-bold tracking-[.12em] text-[#71837b]">HIDRATAÇÃO</p>
-        <GlassWater size={18} className="text-[#2b8fd6]" />
-      </div>
-      <p className="mt-3 text-3xl font-bold tracking-tight">
-        {water === null ? "–" : <AnimatedNumber value={water / 1000} format={value => `${value.toFixed(1).replace(".", ",")} L`} />}
-      </p>
-      <p className="text-xs text-[#71837b]">de {(goal / 1000).toFixed(1).replace(".", ",")} L {ratio >= 1 && "· meta batida 🎉"}</p>
-      <div className="mt-4"><ProgressBar value={ratio} className="bg-[#2b8fd6]" track="bg-[#e6f2fb]" /></div>
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        {[200, 300, 500].map(amount => (
-          <motion.button
-            key={amount}
-            whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-            onClick={() => onAdd(amount)}
-            className="rounded-xl bg-[#eef6fc] py-2 text-xs font-bold text-[#1f6fa8] transition hover:bg-[#e0effa]"
-          >
-            +{amount} ml
-          </motion.button>
-        ))}
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 bottom-0 -z-0"
+      initial={false}
+      animate={{ height }}
+      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 55, damping: 11, mass: 1.1 }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-[#bfe3fb]/80 via-[#9bd1f7]/75 to-[#6db8ee]/80" />
+      <motion.div
+        key={splash}
+        className="absolute inset-x-0 bottom-full h-5 origin-bottom"
+        initial={reduceMotion || !splash ? false : { scaleY: 2.4 }}
+        animate={{ scaleY: 1 }}
+        transition={{ type: "spring", stiffness: 120, damping: 7 }}
+      >
+        <motion.svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute bottom-0 left-0 h-full w-[200%]"
+          animate={reduceMotion ? undefined : { x: ["0%", "-50%"] }} transition={{ duration: 7, repeat: Infinity, ease: "linear" }}>
+          <path d={backWave} fill="#a9d9f8" fillOpacity="0.7" />
+        </motion.svg>
+        <motion.svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute -bottom-px left-0 h-[85%] w-[200%]"
+          animate={reduceMotion ? undefined : { x: ["-50%", "0%"] }} transition={{ duration: 4.5, repeat: Infinity, ease: "linear" }}>
+          <path d={frontWave} fill="#bfe3fb" fillOpacity="0.95" />
+        </motion.svg>
+      </motion.div>
+      {!reduceMotion && splash > 0 && (
+        <div key={`bubbles-${splash}`} className="absolute inset-0 overflow-hidden">
+          {[14, 32, 51, 68, 86].map((left, index) => (
+            <motion.span
+              key={left}
+              className="absolute bottom-2 rounded-full border border-white/80 bg-white/40"
+              style={{ left: `${left}%`, width: 5 + (index % 3) * 3, height: 5 + (index % 3) * 3 }}
+              initial={{ y: 0, opacity: 0 }}
+              animate={{ y: -90 - index * 12, opacity: [0, 1, 0] }}
+              transition={{ duration: 1.4 + index * 0.15, delay: index * 0.08, ease: "easeOut" }}
+            />
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function WaterCard({ water, goal, onAdd }: { water: number | null; goal: number; onAdd: (amount: number) => void }) {
+  const reduceMotion = Boolean(useReducedMotion());
+  const [splash, setSplash] = useState(0);
+  const ratio = water === null ? 0 : water / goal;
+  const done = ratio >= 1;
+  return (
+    <section className={`${card} relative isolate h-full overflow-hidden`}>
+      <WaterFill level={ratio} splash={splash} reduceMotion={reduceMotion} />
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold tracking-[.12em] text-[#5f7169]">HIDRATAÇÃO</p>
+          <GlassWater size={18} className="text-[#1f6fa8]" />
+        </div>
+        <p className="mt-3 text-3xl font-bold tracking-tight">
+          {water === null ? "–" : <AnimatedNumber value={water / 1000} format={value => `${value.toFixed(1).replace(".", ",")} L`} />}
+        </p>
+        <p className="flex items-center gap-2 text-xs text-[#4f6259]">
+          de {(goal / 1000).toFixed(1).replace(".", ",")} L · {Math.round(Math.min(1, ratio) * 100)}%
+          {done && <span className="inline-flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 font-bold text-[#1f6fa8]"><CheckCircle2 size={12} /> Meta batida</span>}
+        </p>
+        <div className="mt-auto grid grid-cols-3 gap-2 pt-6">
+          {[200, 300, 500].map(amount => (
+            <motion.button
+              key={amount}
+              whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+              onClick={() => { setSplash(value => value + 1); onAdd(amount); }}
+              className="rounded-xl bg-white/75 py-2 text-xs font-bold text-[#1f6fa8] shadow-[0_1px_2px_rgba(16,41,31,.06)] backdrop-blur-sm transition hover:bg-white/90"
+            >
+              +{amount} ml
+            </motion.button>
+          ))}
+        </div>
       </div>
     </section>
   );
