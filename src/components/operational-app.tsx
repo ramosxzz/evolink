@@ -138,8 +138,8 @@ export default function OperationalApp() {
     return <CommunityFeedPage viewer={viewer} />;
   if (pathname === "/aluno/check-in") return <LiveCheckin viewer={viewer} />;
   if (pathname === "/aluno/evolucao") return <EvolutionPage viewer={viewer} />;
-  if (pathname === "/aluno/cardio") return <CardioPage />;
-  if (pathname === "/aluno/habitos") return <HabitsPage />;
+  if (pathname === "/aluno/cardio") return <CardioPage viewer={viewer} />;
+  if (pathname === "/aluno/habitos") return <HabitsPage viewer={viewer} />;
   if (pathname === "/aluno/perfil")
     return (
       <LiveProfile viewer={viewer} inviteToken={searchParams.get("convite")} />
