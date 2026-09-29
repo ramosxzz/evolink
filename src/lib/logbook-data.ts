@@ -65,19 +65,41 @@ export type CommunityPost = {
   likedByViewer: boolean;
 };
 
-export async function getLogbook(studentId: string) {
-  const supabase = createClient();
-  const { data: plan, error: planError } = await supabase
-    .from("workout_plans")
-    .select("id, title, objective, estimated_minutes, workout_exercises(id, name, muscle_group, sets, repetitions, rest_seconds, suggested_load, notes, video_url, technique, target_rir, target_rpe, position)")
-    .eq("student_id", studentId)
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+export type WorkoutOption = { id: string; title: string; exerciseCount: number; lastCompletedAt: string | null; daysSinceCompleted: number | null };
 
-  if (planError) return { plan: null, exercises: [] as LogbookExercise[], session: null, activeSets: [] as WorkoutSetLog[], history: [] as WorkoutSetLog[], error: planError };
-  if (!plan) return { plan: null, exercises: [] as LogbookExercise[], session: null, activeSets: [] as WorkoutSetLog[], history: [] as WorkoutSetLog[], error: null };
+/**
+ * Students can have several published workouts (A/B/C). Pick the one with a
+ * session in progress, else the requested one, else the one done longest ago.
+ */
+export async function getLogbook(studentId: string, requestedPlanId?: string) {
+  const supabase = createClient();
+  const empty = { plan: null, plans: [] as WorkoutOption[], exercises: [] as LogbookExercise[], session: null, activeSets: [] as WorkoutSetLog[], history: [] as WorkoutSetLog[] };
+  const [{ data: plans, error: planError }, { data: recent }] = await Promise.all([
+    supabase
+      .from("workout_plans")
+      .select("id, title, objective, estimated_minutes, created_at, workout_exercises(id, name, muscle_group, sets, repetitions, rest_seconds, suggested_load, notes, video_url, technique, target_rir, target_rpe, position)")
+      .eq("student_id", studentId)
+      .eq("status", "published")
+      .order("title"),
+    supabase
+      .from("workout_logs")
+      .select("workout_plan_id, status, completed_at")
+      .eq("student_id", studentId)
+      .order("started_at", { ascending: false })
+      .limit(60),
+  ]);
+
+  if (planError) return { ...empty, error: planError };
+  if (!plans?.length) return { ...empty, error: null };
+
+  const lastCompleted = new Map<string, string>();
+  for (const log of recent ?? []) if (log.status === "completed" && log.completed_at && !lastCompleted.has(log.workout_plan_id)) lastCompleted.set(log.workout_plan_id, log.completed_at);
+  const daysSince = (date?: string) => (date ? Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000) : null);
+  const options: WorkoutOption[] = plans.map(item => ({ id: item.id, title: item.title, exerciseCount: item.workout_exercises?.length ?? 0, lastCompletedAt: lastCompleted.get(item.id) ?? null, daysSinceCompleted: daysSince(lastCompleted.get(item.id)) }));
+  const inProgress = (recent ?? []).find(log => log.status === "in_progress" && plans.some(item => item.id === log.workout_plan_id));
+  const next = [...options].sort((a, b) => (a.lastCompletedAt ?? "").localeCompare(b.lastCompletedAt ?? ""))[0];
+  const planId = inProgress?.workout_plan_id ?? (plans.some(item => item.id === requestedPlanId) ? requestedPlanId : next.id);
+  const plan = plans.find(item => item.id === planId) ?? plans[0];
 
   const exercises = [...(plan.workout_exercises ?? [])]
     .sort((a, b) => a.position - b.position) as LogbookExercise[];
@@ -106,6 +128,8 @@ export async function getLogbook(studentId: string) {
   const session = activeSession as WorkoutSession | null;
   return {
     plan: { id: plan.id, title: plan.title, objective: plan.objective, estimatedMinutes: plan.estimated_minutes },
+    plans: options,
+    suggestedPlanId: next.id,
     exercises,
     session,
     activeSets: session ? allLogs.filter((entry) => entry.workout_log_id === session.id) : [],

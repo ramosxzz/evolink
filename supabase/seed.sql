@@ -89,7 +89,7 @@ values
   ('00000000-0000-4000-b000-000000000012', current_date - 15, 300, 'paid',    now() - interval '15 days', 'pix'),
   ('00000000-0000-4000-b000-000000000013', current_date - 12, 250, 'overdue', null, null);
 
--- Published workout and diet for Lucas.
+-- Published workouts (A/B rotation) and diet for Lucas.
 insert into public.workout_plans (id, student_id, professional_id, title, objective, estimated_minutes, status, starts_on, ends_on)
 values ('00000000-0000-4000-c000-000000000011', '00000000-0000-4000-a000-000000000011', '00000000-0000-4000-a000-000000000001',
         'Treino A · Inferiores', 'Hipertrofia de quadríceps e glúteos', 60, 'published', current_date - 7, current_date + 35);
@@ -102,6 +102,18 @@ values
   ('00000000-0000-4000-c000-000000000011', 'Cadeira extensora',          'Quadríceps', 3, '12-15', 60,  '45 kg', 4),
   ('00000000-0000-4000-c000-000000000011', 'Elevação pélvica',           'Glúteos',    3, '12',    60,  '70 kg', 5),
   ('00000000-0000-4000-c000-000000000011', 'Panturrilha em pé',          'Panturrilha',4, '15',    45,  '50 kg', 6);
+
+insert into public.workout_plans (id, student_id, professional_id, title, objective, estimated_minutes, status, starts_on, ends_on)
+values ('00000000-0000-4000-c000-000000000012', '00000000-0000-4000-a000-000000000011', '00000000-0000-4000-a000-000000000001',
+        'Treino B · Superiores', 'Peito, costas e ombros', 55, 'published', current_date - 7, current_date + 35);
+
+insert into public.workout_exercises (workout_plan_id, name, muscle_group, sets, repetitions, rest_seconds, suggested_load, position)
+values
+  ('00000000-0000-4000-c000-000000000012', 'Supino reto',            'Peito',   4, '8-10',  120, '70 kg', 1),
+  ('00000000-0000-4000-c000-000000000012', 'Remada curvada',         'Costas',  4, '8-10',  90,  '60 kg', 2),
+  ('00000000-0000-4000-c000-000000000012', 'Desenvolvimento halter', 'Ombros',  3, '10-12', 90,  '22 kg', 3),
+  ('00000000-0000-4000-c000-000000000012', 'Puxada frontal',         'Costas',  3, '10-12', 75,  '55 kg', 4),
+  ('00000000-0000-4000-c000-000000000012', 'Elevação lateral',       'Ombros',  3, '15',    45,  '10 kg', 5);
 
 insert into public.diet_plans (id, student_id, professional_id, title, status, starts_on, ends_on)
 values ('00000000-0000-4000-d000-000000000011', '00000000-0000-4000-a000-000000000011', '00000000-0000-4000-a000-000000000001',

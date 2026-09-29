@@ -34,6 +34,7 @@ import {
   togglePostLike,
   type CommunityPost,
   type LogbookExercise,
+  type WorkoutOption,
   type WorkoutSession,
   type WorkoutSetLog,
 } from "@/lib/logbook-data";
@@ -101,6 +102,8 @@ export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
   const [finishing, setFinishing] = useState(false);
   const [message, setMessage] = useState("");
   const [summary, setSummary] = useState<CompletedSummary | null>(null);
+  const [plans, setPlans] = useState<WorkoutOption[]>([]);
+  const [suggestedPlanId, setSuggestedPlanId] = useState<string | null>(null);
 
   function hydrateDrafts(items: LogbookExercise[], activeSets: WorkoutSetLog[], historical: WorkoutSetLog[]) {
     const next: Record<string, SetDraft> = {};
@@ -124,15 +127,17 @@ export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
     setExpanded(Object.fromEntries(items.map((exercise, index) => [exercise.id, index === 0 || activeSets.some((entry) => entry.workout_exercise_id === exercise.id)])));
   }
 
-  async function load() {
+  async function load(planId?: string) {
     setLoading(true);
     setLoadError("");
-    const result = await getLogbook(viewer.id);
+    const result = await getLogbook(viewer.id, planId);
     setLoading(false);
     if (result.error) {
       setLoadError(result.error.message);
       return;
     }
+    setPlans(result.plans);
+    setSuggestedPlanId("suggestedPlanId" in result ? result.suggestedPlanId ?? null : null);
     setPlan(result.plan);
     setExercises(result.exercises);
     setHistory(result.history);
@@ -149,6 +154,8 @@ export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
         setLoadError(result.error.message);
         return;
       }
+      setPlans(result.plans);
+      setSuggestedPlanId("suggestedPlanId" in result ? result.suggestedPlanId ?? null : null);
       setPlan(result.plan);
       setExercises(result.exercises);
       setHistory(result.history);
@@ -364,7 +371,7 @@ export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
   }
 
   return <Shell profile="student"><PageTitle kicker="LOGBOOK" title={session ? plan?.title ?? "Treino em andamento" : "Seu treino de hoje"} text={session ? "Registre cada série. O descanso começa automaticamente." : "Carga, repetições e evolução no mesmo lugar."} />
-    {loading ? <LoadingState /> : loadError ? <ErrorState message={loadError} onRetry={() => void load()} /> : !plan || exercises.length === 0 ? <EmptyWorkout /> : !session ? <WorkoutIntro plan={plan} exercises={exercises} starting={starting} onStart={() => void begin()} /> : <>
+    {loading ? <LoadingState /> : loadError ? <ErrorState message={loadError} onRetry={() => void load()} /> : !plan || exercises.length === 0 ? <EmptyWorkout /> : !session ? <>{plans.length > 1 && <PlanSwitcher plans={plans} selectedId={plan.id} suggestedId={suggestedPlanId} onSelect={id => void load(id)} />}<WorkoutIntro plan={plan} exercises={exercises} starting={starting} onStart={() => void begin()} /></> : <>
       <section className="sticky top-[76px] z-[8] mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-[#dbe7e0] bg-white/95 p-2 shadow-lg shadow-emerald-950/5 backdrop-blur md:grid-cols-4"><MiniStat icon={Clock3} label="Tempo" value={formatDuration(elapsed)} /><MiniStat icon={Dumbbell} label="Séries" value={String(totals.sets)} /><MiniStat icon={Flame} label="Volume" value={formatVolume(totals.volume)} /><MiniStat icon={Medal} label="Recordes" value={String(totals.prs)} className="hidden md:flex" /></section>
       <div className="mt-5 space-y-4">{exercises.map((exercise, exerciseIndex) => {
         const count = Math.max(1, exercise.sets ?? 3);
@@ -433,3 +440,28 @@ export function CommunityFeedPage({ viewer }: { viewer: Viewer }) {
 }
 
 function FeedStat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-white/10 p-3"><b className="block text-lg">{value}</b><span className="text-[9px] font-bold tracking-[.1em] text-[#b8e986]">{label.toUpperCase()}</span></div>; }
+
+function PlanSwitcher({ plans, selectedId, suggestedId, onSelect }: { plans: WorkoutOption[]; selectedId: string; suggestedId: string | null; onSelect: (id: string) => void }) {
+  const since = (days: number | null) => (days === null ? "Ainda não feito" : days === 0 ? "Feito hoje" : days === 1 ? "Feito ontem" : `Há ${days} dias`);
+  return (
+    <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
+      {plans.map(option => {
+        const active = option.id === selectedId;
+        return (
+          <button
+            key={option.id}
+            onClick={() => !active && onSelect(option.id)}
+            aria-pressed={active}
+            className={`min-w-44 shrink-0 rounded-2xl border p-3 text-left transition ${active ? "border-[#087a50] bg-[#e7f4ec]" : "border-[#dbe7e0] bg-white hover:border-[#9cc7b1]"}`}
+          >
+            <span className="flex items-center justify-between gap-2">
+              <span className="truncate text-sm font-bold">{option.title}</span>
+              {option.id === suggestedId && <span className="rounded-full bg-[#087a50] px-2 py-0.5 text-[10px] font-bold text-white">Próximo</span>}
+            </span>
+            <span className="mt-1 block text-xs text-[#71837b]">{option.exerciseCount} exercícios · {since(option.daysSinceCompleted)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}

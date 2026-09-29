@@ -7,10 +7,11 @@ import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
 import { Apple, ArrowRight, CheckCircle2, ClipboardCheck, Clock3, Dumbbell, GlassWater, MessageCircle, TrendingDown, TrendingUp } from "lucide-react";
 import { Button, Shell } from "@/components/app-shell";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
-import { addWater, getProgress, getStudentDiet, getStudentWorkout, getWaterToday, getWeekCheckin, type Viewer } from "@/lib/evolink-data";
+import { addWater, getProgress, getStudentDiet, getWaterToday, getWeekCheckin, type Viewer } from "@/lib/evolink-data";
+import { getLogbook } from "@/lib/logbook-data";
 
 type HomeData = {
-  workout: Awaited<ReturnType<typeof getStudentWorkout>>;
+  workout: Awaited<ReturnType<typeof getLogbook>>;
   diet: Awaited<ReturnType<typeof getStudentDiet>>;
   checkin: Awaited<ReturnType<typeof getWeekCheckin>>;
   progress: Awaited<ReturnType<typeof getProgress>>;
@@ -25,7 +26,7 @@ export function StudentHomePage({ viewer }: { viewer: Viewer }) {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getStudentWorkout(viewer.id), getStudentDiet(viewer.id), getWeekCheckin(viewer.id), getProgress(viewer.id)])
+    Promise.all([getLogbook(viewer.id), getStudentDiet(viewer.id), getWeekCheckin(viewer.id), getProgress(viewer.id)])
       .then(([workout, diet, checkin, progress]) => { if (active) setData({ workout, diet, checkin, progress }); });
     getWaterToday(viewer.id).then(value => { if (active) setWater(value); });
     return () => { active = false; };
@@ -80,19 +81,20 @@ export function StudentHomePage({ viewer }: { viewer: Viewer }) {
 
 function WorkoutCard({ data, onOpen }: { data: HomeData | null; onOpen: () => void }) {
   if (!data) return <Skeleton tall />;
-  const { plan, exercises, completedExerciseIds } = data.workout;
-  const done = exercises.filter(exercise => completedExerciseIds.has(exercise.id)).length;
-  const finished = exercises.length > 0 && done === exercises.length;
+  const { plan, plans, exercises, session, activeSets } = data.workout;
+  // Exercises with at least one set logged in the session in progress.
+  const doneIds = new Set(activeSets.map(set => set.workout_exercise_id));
+  const done = session ? exercises.filter(exercise => doneIds.has(exercise.id)).length : 0;
   return (
     <section className="relative h-full overflow-hidden rounded-3xl bg-[#087a50] p-6 text-white soft-shadow">
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#b8e986]/20 blur-2xl" />
       <div className="relative flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold tracking-[.14em] text-[#b8e986]">TREINO DE HOJE</p>
+          <p className="text-xs font-bold tracking-[.14em] text-[#b8e986]">{session ? "TREINO EM ANDAMENTO" : plans.length > 1 ? "PRÓXIMO TREINO" : "TREINO DE HOJE"}</p>
           <h2 className="mt-2 text-2xl font-bold">{plan?.title ?? "Nenhum treino publicado"}</h2>
           <p className="mt-1 text-sm text-emerald-100">
             {plan
-              ? `${exercises.length} exercícios${plan.estimated_minutes ? ` · cerca de ${plan.estimated_minutes} min` : ""}`
+              ? `${exercises.length} exercícios${plan.estimatedMinutes ? ` · cerca de ${plan.estimatedMinutes} min` : ""}`
               : "Assim que seu profissional publicar, ele aparece aqui."}
           </p>
         </div>
@@ -101,20 +103,20 @@ function WorkoutCard({ data, onOpen }: { data: HomeData | null; onOpen: () => vo
       {plan && (
         <div className="relative mt-6">
           <div className="mb-2 flex justify-between text-xs font-bold text-emerald-100">
-            <span>{finished ? "Treino concluído" : `${done} de ${exercises.length} feitos`}</span>
+            <span>{session ? `${done} de ${exercises.length} exercícios iniciados` : `${plans.length} ${plans.length === 1 ? "treino ativo" : "treinos na rotação"}`}</span>
             <span>{exercises.length ? Math.round((done / exercises.length) * 100) : 0}%</span>
           </div>
           <ProgressBar value={exercises.length ? done / exercises.length : 0} className="bg-[#b8e986]" track="bg-white/20" />
           <div className="mt-5 flex flex-wrap gap-2">
             {exercises.slice(0, 4).map(exercise => (
-              <span key={exercise.id} className={`rounded-full px-3 py-1 text-xs font-semibold ${completedExerciseIds.has(exercise.id) ? "bg-[#b8e986] text-[#07352b]" : "bg-white/15"}`}>
+              <span key={exercise.id} className={`rounded-full px-3 py-1 text-xs font-semibold ${doneIds.has(exercise.id) ? "bg-[#b8e986] text-[#07352b]" : "bg-white/15"}`}>
                 {exercise.name}
               </span>
             ))}
             {exercises.length > 4 && <span className="rounded-full bg-white/10 px-3 py-1 text-xs">+{exercises.length - 4}</span>}
           </div>
           <Button kind="soft" onClick={onOpen} className="mt-6">
-            {finished ? "Ver resumo" : done ? "Continuar treino" : "Começar treino"}<ArrowRight size={16} />
+            {session ? "Continuar treino" : "Começar treino"}<ArrowRight size={16} />
           </Button>
         </div>
       )}

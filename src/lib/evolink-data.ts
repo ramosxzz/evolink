@@ -21,18 +21,6 @@ export type Meal = {
   meal_items: { id: string; description: string; quantity: number | null; unit: string | null; substitutions: string[] }[];
 };
 
-export type WorkoutExercise = {
-  id: string;
-  name: string;
-  sets: number | null;
-  repetitions: string | null;
-  rest_seconds: number | null;
-  suggested_load: string | null;
-  notes: string | null;
-  video_url: string | null;
-  media_id: string | null;
-};
-
 const today = () => localDate();
 
 // Shell, notifications and the router all ask for the viewer on every page;
@@ -101,19 +89,6 @@ export async function toggleMeal(studentId: string, mealId: string, completed: b
   const supabase = createClient();
   if (completed) return supabase.from("meal_logs").upsert({ student_id: studentId, meal_id: mealId, logged_for: today(), completed_at: new Date().toISOString() }, { onConflict: "student_id,meal_id,logged_for" });
   return supabase.from("meal_logs").upsert({ student_id: studentId, meal_id: mealId, logged_for: today(), completed_at: null }, { onConflict: "student_id,meal_id,logged_for" });
-}
-
-export async function getStudentWorkout(studentId: string) {
-  const supabase = createClient();
-  const { data: plan } = await supabase.from("workout_plans").select("id, title, objective, estimated_minutes, workout_exercises(id, name, sets, repetitions, rest_seconds, suggested_load, notes, video_url, media_id, position)").eq("student_id", studentId).eq("status", "published").order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (!plan) return { plan: null, exercises: [] as WorkoutExercise[], completedExerciseIds: new Set<string>() };
-  const exerciseIds = (plan.workout_exercises ?? []).map(exercise => exercise.id);
-  const { data: logs } = exerciseIds.length ? await supabase.from("workout_exercise_logs").select("workout_exercise_id").eq("student_id", studentId).gte("completed_at", startOfTodayIso()) : { data: [] };
-  return { plan, exercises: [...(plan.workout_exercises ?? [])].sort((a, b) => a.position - b.position) as WorkoutExercise[], completedExerciseIds: new Set((logs ?? []).map(log => log.workout_exercise_id)) };
-}
-
-export async function logExercise(studentId: string, exerciseId: string, loadValue?: string) {
-  return createClient().from("workout_exercise_logs").insert({ student_id: studentId, workout_exercise_id: exerciseId, load_value: loadValue || null });
 }
 
 export async function getWaterToday(studentId: string) {
