@@ -29,7 +29,7 @@ import {
   LiveProfile,
   LiveStudentHome,
 } from "@/components/operational-pages";
-import { getViewer, type Viewer } from "@/lib/evolink-data";
+import { getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
 
 const publicPaths = ["/", "/login", "/cadastro", "/recuperar-senha", "/redefinir-senha"] as const;
@@ -45,11 +45,22 @@ export default function OperationalApp() {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, []);
   useEffect(() => {
-    getViewer().then(setViewer);
-    const { data } = createClient().auth.onAuthStateChange(() =>
-      getViewer().then(setViewer),
-    );
-    return () => data.subscription.unsubscribe();
+    const reload = () =>
+      getViewer().then(next =>
+        setViewer(current => (JSON.stringify(current) === JSON.stringify(next) ? current : next)),
+      );
+    reload();
+    // Token refreshes also fire here; only identity changes need a reload.
+    const { data } = createClient().auth.onAuthStateChange(event => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      invalidateViewer();
+      reload();
+    });
+    window.addEventListener(VIEWER_CHANGED_EVENT, reload);
+    return () => {
+      data.subscription.unsubscribe();
+      window.removeEventListener(VIEWER_CHANGED_EVENT, reload);
+    };
   }, []);
   useEffect(() => {
     // The recovery link signs the user in; keep them on the new-password form.

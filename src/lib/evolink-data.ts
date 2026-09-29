@@ -34,7 +34,33 @@ export type WorkoutExercise = {
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
+// Shell, notifications and the router all ask for the viewer on every page;
+// share one lookup per signed-in user instead of repeating ~5 requests each.
+let viewerCache: { userId: string; expires: number; promise: Promise<Viewer | null> } | null = null;
+
+export function invalidateViewer() {
+  viewerCache = null;
+}
+
+export const VIEWER_CHANGED_EVENT = "evolink:viewer-changed";
+
+// Call after changing data the viewer carries (name, linked professional).
+export function refreshViewer() {
+  invalidateViewer();
+  window.dispatchEvent(new Event(VIEWER_CHANGED_EVENT));
+}
+
 export async function getViewer(): Promise<Viewer | null> {
+  const { data: { session } } = await createClient().auth.getSession();
+  const userId = session?.user.id;
+  if (!userId) { viewerCache = null; return null; }
+  if (viewerCache?.userId === userId && viewerCache.expires > Date.now()) return viewerCache.promise;
+  const promise = loadViewer().catch(error => { viewerCache = null; throw error; });
+  viewerCache = { userId, expires: Date.now() + 60_000, promise };
+  return promise;
+}
+
+async function loadViewer(): Promise<Viewer | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -461,6 +487,7 @@ export async function redeemProfessionalInvite(token: string) {
   const { data: { session } } = await createClient().auth.getSession();
   const response = await fetch("/api/invites/redeem", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` }, body: JSON.stringify({ inviteToken: token }) });
   const body = await response.json().catch(() => ({}));
+  if (response.ok) refreshViewer();
   return { error: response.ok ? null : new Error(body.error ?? "Não foi possível aceitar o convite.") };
 }
 
@@ -703,7 +730,9 @@ export async function saveProfessionalSettings(professionalId: string, values: {
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" }),
   ]);
-  return { error: profile.error ?? professional.error ?? preferences.error };
+  const error = profile.error ?? professional.error ?? preferences.error;
+  if (!error) refreshViewer();
+  return { error };
 }
 
 export async function getProfessionalLibrary(professionalId: string) {
