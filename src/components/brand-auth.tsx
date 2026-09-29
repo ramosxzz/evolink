@@ -4,8 +4,9 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight, CheckCircle2, LockKeyhole, Mail, UserRound } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
+import { Spinner } from "@/components/app-shell";
 
 type AuthPath = "/" | "/login" | "/cadastro" | "/recuperar-senha" | "/redefinir-senha";
 
@@ -13,6 +14,7 @@ export function BrandAuth({ path }: { path: AuthPath }) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [accountRole, setAccountRole] = useState<"student" | "professional">("student");
   const signup = path === "/cadastro";
@@ -29,7 +31,7 @@ export function BrandAuth({ path }: { path: AuthPath }) {
       if (recovery) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/redefinir-senha` });
         if (error) throw error;
-        setFeedback({ kind: "success", message: "Se houver uma conta com esse e-mail, você vai receber um link para criar uma nova senha." }); return;
+        setFeedback({ kind: "success", message: "Se houver uma conta com esse e-mail, você vai receber um link para criar uma nova senha." }); setSent(true); window.setTimeout(() => setSent(false), 2500); return;
       }
       if (reset) {
         if (password.length < 8) throw new Error("A senha precisa ter pelo menos 8 caracteres.");
@@ -98,7 +100,24 @@ export function BrandAuth({ path }: { path: AuthPath }) {
           {reset && <Input name="passwordConfirm" label="Confirme a nova senha" placeholder="Repita a senha" type="password" icon={LockKeyhole} minLength={8} autoComplete="new-password" />}
           {signup && <label className="flex gap-3 rounded-xl bg-white/70 p-3 text-xs leading-relaxed text-[#5f746d]"><input required type="checkbox" className="mt-0.5 accent-[#07845a]"/><span>Li e aceito os <a href="/termos#termos" target="_blank" rel="noreferrer" className="font-bold text-[#07845a] underline">termos de uso</a> e a <a href="/termos#privacidade" target="_blank" rel="noreferrer" className="font-bold text-[#07845a] underline">política de privacidade</a>.</span></label>}
           {!signup && !recovery && !reset && <div className="flex justify-end text-sm"><button type="button" onClick={() => router.push("/recuperar-senha")} className="font-bold text-[#07845a]">Esqueci minha senha</button></div>}
-          <motion.button whileTap={reduceMotion ? undefined : { scale: .98 }} disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#07845a] px-5 py-4 text-sm font-bold text-white shadow-xl shadow-emerald-950/15 transition hover:bg-[#066a49] active:scale-[.98] disabled:opacity-60">{loading ? "Aguarde..." : reset ? "Salvar nova senha" : recovery ? "Enviar link" : signup ? "Criar minha conta" : "Entrar no Evolink"}<ArrowRight size={17}/></motion.button>
+          <motion.button
+            whileTap={reduceMotion || loading ? undefined : { scale: .96 }}
+            animate={reduceMotion ? undefined : sent ? { scale: [1, 1.03, 1] } : loading ? { scale: .985 } : { scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 26 }}
+            disabled={loading}
+            aria-busy={loading || undefined}
+            className={`relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl px-5 py-4 text-sm font-bold text-white shadow-xl shadow-emerald-950/15 transition-colors ${sent ? "bg-[#0a9463]" : "bg-[#07845a] hover:bg-[#066a49]"} ${loading ? "cursor-wait" : ""}`}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {loading ? (
+                <motion.span key="loading" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="flex items-center gap-2"><Spinner size={18} />{recovery ? "Enviando..." : reset ? "Salvando..." : signup ? "Criando conta..." : "Entrando..."}</motion.span>
+              ) : sent ? (
+                <motion.span key="sent" initial={{ opacity: 0, scale: .8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2"><CheckCircle2 size={18} />{recovery ? "Link enviado" : "Pronto"}</motion.span>
+              ) : (
+                <motion.span key="idle" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="flex items-center gap-2">{reset ? "Salvar nova senha" : recovery ? "Enviar link" : signup ? "Criar minha conta" : "Entrar no Evolink"}<ArrowRight size={17}/></motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </form>
         {feedback && <motion.p role="status" initial={reduceMotion ? false : { opacity: 0, scale: .96, y: 6 }} animate={{ opacity: 1, scale: 1, y: 0 }} className={`mt-4 flex gap-2 rounded-xl border p-3 text-sm ${feedback.kind === "success" ? "border-[#b7dfca] bg-[#e8f8ed] text-[#176340]" : "border-[#efc9c5] bg-[#fff1ef] text-[#9b342c]"}`}>{feedback.kind === "success" ? <CheckCircle2 size={18} className="shrink-0"/> : <AlertCircle size={18} className="shrink-0"/>}{feedback.message}</motion.p>}
         {(recovery || reset) && <p className="mt-7 text-center text-sm text-[#5f746d]"><button onClick={() => router.push("/login")} className="font-bold text-[#07845a]">Voltar para o login</button></p>}
