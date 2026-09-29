@@ -40,9 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# cloudflare / opennext build output
-/.open-next/
-/.wrangler/
 
 # supabase cli local state
 /supabase/.temp/
