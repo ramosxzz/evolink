@@ -88,3 +88,41 @@ values
   ('00000000-0000-4000-b000-000000000011', current_date + 10, 250, 'pending', null, null),
   ('00000000-0000-4000-b000-000000000012', current_date - 15, 300, 'paid',    now() - interval '15 days', 'pix'),
   ('00000000-0000-4000-b000-000000000013', current_date - 12, 250, 'overdue', null, null);
+
+-- Published workout and diet for Lucas.
+insert into public.workout_plans (id, student_id, professional_id, title, objective, estimated_minutes, status, starts_on, ends_on)
+values ('00000000-0000-4000-c000-000000000011', '00000000-0000-4000-a000-000000000011', '00000000-0000-4000-a000-000000000001',
+        'Treino A · Inferiores', 'Hipertrofia de quadríceps e glúteos', 60, 'published', current_date - 7, current_date + 35);
+
+insert into public.workout_exercises (workout_plan_id, name, muscle_group, sets, repetitions, rest_seconds, suggested_load, position)
+values
+  ('00000000-0000-4000-c000-000000000011', 'Agachamento livre',          'Quadríceps', 4, '8-10',  120, '80 kg', 1),
+  ('00000000-0000-4000-c000-000000000011', 'Leg press 45°',              'Quadríceps', 4, '10-12', 90,  '200 kg', 2),
+  ('00000000-0000-4000-c000-000000000011', 'Levantamento terra romeno',  'Posterior',  3, '10',    90,  '60 kg', 3),
+  ('00000000-0000-4000-c000-000000000011', 'Cadeira extensora',          'Quadríceps', 3, '12-15', 60,  '45 kg', 4),
+  ('00000000-0000-4000-c000-000000000011', 'Elevação pélvica',           'Glúteos',    3, '12',    60,  '70 kg', 5),
+  ('00000000-0000-4000-c000-000000000011', 'Panturrilha em pé',          'Panturrilha',4, '15',    45,  '50 kg', 6);
+
+insert into public.diet_plans (id, student_id, professional_id, title, status, starts_on, ends_on)
+values ('00000000-0000-4000-d000-000000000011', '00000000-0000-4000-a000-000000000011', '00000000-0000-4000-a000-000000000001',
+        'Cutting · 2.200 kcal', 'published', current_date - 7, current_date + 21);
+
+insert into public.meals (id, diet_plan_id, name, scheduled_time, position)
+values
+  ('00000000-0000-4000-e000-000000000001', '00000000-0000-4000-d000-000000000011', 'Café da manhã',  '07:00', 1),
+  ('00000000-0000-4000-e000-000000000002', '00000000-0000-4000-d000-000000000011', 'Almoço',         '12:30', 2),
+  ('00000000-0000-4000-e000-000000000003', '00000000-0000-4000-d000-000000000011', 'Pré-treino',     '16:30', 3),
+  ('00000000-0000-4000-e000-000000000004', '00000000-0000-4000-d000-000000000011', 'Jantar',         '20:00', 4);
+
+insert into public.meal_items (meal_id, description, quantity, unit, position, substitutions)
+values
+  ('00000000-0000-4000-e000-000000000001', 'Ovos mexidos',        3,   'un', 1, '["2 fatias de queijo branco"]'),
+  ('00000000-0000-4000-e000-000000000001', 'Pão integral',        2,   'fatias', 2, '["40 g de aveia"]'),
+  ('00000000-0000-4000-e000-000000000001', 'Banana',              1,   'un', 3, '[]'),
+  ('00000000-0000-4000-e000-000000000002', 'Arroz branco',        150, 'g', 1, '["200 g de batata inglesa"]'),
+  ('00000000-0000-4000-e000-000000000002', 'Feijão',              100, 'g', 2, '[]'),
+  ('00000000-0000-4000-e000-000000000002', 'Peito de frango',     150, 'g', 3, '["150 g de patinho moído"]'),
+  ('00000000-0000-4000-e000-000000000003', 'Iogurte natural',     170, 'g', 1, '[]'),
+  ('00000000-0000-4000-e000-000000000003', 'Whey protein',        30,  'g', 2, '[]'),
+  ('00000000-0000-4000-e000-000000000004', 'Tilápia grelhada',    180, 'g', 1, '["150 g de frango"]'),
+  ('00000000-0000-4000-e000-000000000004', 'Legumes no vapor',    200, 'g', 2, '[]');

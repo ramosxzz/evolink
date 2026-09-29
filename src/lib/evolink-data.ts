@@ -511,14 +511,26 @@ export async function publishDiet(professionalId: string, studentId: string, val
   return { error: null };
 }
 
+export async function getWeekCheckin(studentId: string) {
+  const { data } = await createClient().from("check_ins").select("id, status, professional_feedback, submitted_at, reviewed_at").eq("student_id", studentId).eq("week_of", weekStart()).maybeSingle();
+  return data;
+}
+
+/** Signed URLs (1h) for private progress photos, keyed by storage path. */
+export async function getProgressPhotoUrls(paths: string[]) {
+  if (!paths.length) return {} as Record<string, string>;
+  const { data } = await createClient().storage.from("progress-media").createSignedUrls(paths, 3600);
+  return Object.fromEntries((data ?? []).filter(item => item.signedUrl && item.path).map(item => [item.path as string, item.signedUrl])) as Record<string, string>;
+}
+
 export async function getProgress(studentId: string) {
-  const { data } = await createClient().from("progress_records").select("id, recorded_on, weight_kg, note, progress_photos(id, storage_path, angle)").eq("student_id", studentId).order("recorded_on", { ascending: false }).limit(30);
+  const { data } = await createClient().from("progress_records").select("id, recorded_on, weight_kg, waist_cm, note, progress_photos(id, storage_path, angle)").eq("student_id", studentId).order("recorded_on", { ascending: false }).limit(30);
   return data ?? [];
 }
 
-export async function addProgressRecord(studentId: string, weight: number, note: string, photo?: File) {
+export async function addProgressRecord(studentId: string, weight: number, note: string, photo?: File, waist?: number) {
   const supabase = createClient();
-  const { data: record, error } = await supabase.from("progress_records").upsert({ student_id: studentId, recorded_on: today(), weight_kg: weight, note: note || null }, { onConflict: "student_id,recorded_on" }).select("id").single();
+  const { data: record, error } = await supabase.from("progress_records").upsert({ student_id: studentId, recorded_on: today(), weight_kg: weight, note: note || null, ...(waist ? { waist_cm: waist } : {}) }, { onConflict: "student_id,recorded_on" }).select("id").single();
   if (error || !record || !photo) return { error };
   const extension = photo.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${studentId}/${record.id}-${crypto.randomUUID()}.${extension}`;

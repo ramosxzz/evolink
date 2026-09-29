@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BrandAuth } from "@/components/brand-auth";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { ChatPage } from "@/components/chat-page";
+import { EvolutionPage } from "@/components/evolution-page";
+import { StudentHomePage } from "@/components/student-home-page";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
 import { CommunityFeedPage, WorkoutLogbookPage } from "@/components/workout-logbook-page";
 import {
@@ -20,14 +22,12 @@ import {
 import {
   LiveCheckin,
   LiveDiet,
-  LiveEvolution,
   LiveProfessionalBuilder,
   LiveProfessionalCheckins,
   LiveProfessionalDashboard,
   LiveProfessionalStudentPage,
   LiveProfessionalStudentsPage,
   LiveProfile,
-  LiveStudentHome,
 } from "@/components/operational-pages";
 import { getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
@@ -130,14 +130,14 @@ export default function OperationalApp() {
         </section>
       </main>
     );
-  if (pathname === "/aluno") return <LiveStudentHome viewer={viewer} />;
+  if (pathname === "/aluno") return <StudentHomePage viewer={viewer} />;
   if (pathname === "/aluno/dieta") return <LiveDiet viewer={viewer} />;
   if (pathname === "/aluno/treino" || pathname.startsWith("/aluno/treino/"))
     return <WorkoutLogbookPage viewer={viewer} />;
   if (pathname === "/aluno/comunidade" || pathname === "/profissional/comunidade")
     return <CommunityFeedPage viewer={viewer} />;
   if (pathname === "/aluno/check-in") return <LiveCheckin viewer={viewer} />;
-  if (pathname === "/aluno/evolucao") return <LiveEvolution viewer={viewer} />;
+  if (pathname === "/aluno/evolucao") return <EvolutionPage viewer={viewer} />;
   if (pathname === "/aluno/cardio") return <CardioPage />;
   if (pathname === "/aluno/habitos") return <HabitsPage />;
   if (pathname === "/aluno/perfil")
