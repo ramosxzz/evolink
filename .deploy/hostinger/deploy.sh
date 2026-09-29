@@ -28,8 +28,9 @@ ssh_opts="-F /dev/null -i $ssh_key -o BatchMode=yes -o StrictHostKeyChecking=acc
 cd "$project_dir"
 
 echo "Enviando o projeto para $remote_host:$remote_dir..."
-# Sem --delete: o .env do servidor e arquivos gerados lá são preservados.
-rsync -az \
+# --delete remove no servidor arquivos apagados aqui. Itens excluídos abaixo
+# (inclusive o .env do servidor) nunca são apagados.
+rsync -az --delete \
   --exclude .git \
   --exclude node_modules \
   --exclude .next \
