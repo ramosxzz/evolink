@@ -138,3 +138,13 @@ values
   ('00000000-0000-4000-e000-000000000003', 'Whey protein',        30,  'g', 2, '[]'),
   ('00000000-0000-4000-e000-000000000004', 'Tilápia grelhada',    180, 'g', 1, '["150 g de frango"]'),
   ('00000000-0000-4000-e000-000000000004', 'Legumes no vapor',    200, 'g', 2, '[]');
+
+-- Sample events (fictitious, local development only).
+insert into public.events (id, created_by, title, kind, federation_code, starts_on, city, state, venue, description, categories)
+values
+  ('00000000-0000-4000-f000-000000000001', '00000000-0000-4000-a000-000000000001', 'Campeonato Gaúcho de Exemplo', 'campeonato', 'ifbb_brasil', current_date + 45, 'Porto Alegre', 'RS', 'Ginásio de Exemplo',
+   'Evento fictício para testes locais.', array['Bodybuilding', 'Classic Physique', 'Men''s Physique', 'Bikini', 'Wellness']),
+  ('00000000-0000-4000-f000-000000000002', '00000000-0000-4000-a000-000000000001', 'Seletiva Natural Serra (exemplo)', 'seletiva', 'wnbf', current_date + 80, 'Caxias do Sul', 'RS', null,
+   'Evento fictício para testes locais.', array['Men''s Physique', 'Bikini', 'Estreantes']),
+  ('00000000-0000-4000-f000-000000000003', '00000000-0000-4000-a000-000000000001', 'Open Nacional de Exemplo', 'campeonato', 'npc', current_date - 10, 'São Paulo', 'SP', 'Centro de Eventos Exemplo',
+   'Evento fictício que já aconteceu, para testar avaliações.', array['Bodybuilding', 'Bikini', 'Figure']);
