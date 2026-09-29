@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowDownRight, ArrowUpRight, CheckCircle2, ChevronRight, ClipboardCheck, Send } from "lucide-react";
 import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { ListSkeleton } from "@/components/ui/skeleton";
+import { useCached } from "@/lib/page-cache";
 import { getProfessionalCheckins, reviewCheckin, type Viewer } from "@/lib/evolink-data";
 
 type Checkin = Awaited<ReturnType<typeof getProfessionalCheckins>>[number];
@@ -26,14 +27,14 @@ const scoreFields = [
 ] as const;
 
 export function CoachCheckinsPage({ viewer }: { viewer: Viewer }) {
-  const [checkins, setCheckins] = useState<Checkin[] | null>(null);
+  const [checkins, setCheckins] = useCached<Checkin[] | null>(`pro-checkins:${viewer.id}`, null);
   const [tab, setTab] = useState<Tab>("pendentes");
 
   useEffect(() => {
     let active = true;
     getProfessionalCheckins(viewer.id).then(rows => { if (active) setCheckins(rows); });
     return () => { active = false; };
-  }, [viewer.id]);
+  }, [viewer.id, setCheckins]);
 
   // Previous weight per student, to show the change since the last check-in.
   const previousWeight = useMemo(() => {

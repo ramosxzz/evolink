@@ -6,6 +6,7 @@ import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Too
 import { Camera, CheckCircle2, ImageIcon, Scale, Target, TrendingDown, TrendingUp, X } from "lucide-react";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { AnimatedNumber, Reveal } from "@/components/ui/motion";
+import { useCached } from "@/lib/page-cache";
 import { addProgressRecord, getProgress, getProgressPhotoUrls, type Viewer } from "@/lib/evolink-data";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -34,8 +35,8 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
 
 /** Stats, weight chart and history with photos. Read-only; used by the student and the coach. */
 export function ProgressOverview({ studentId, target, aside }: { studentId: string; target: number | null; aside?: React.ReactNode }) {
-  const [records, setRecords] = useState<ProgressRecord[] | null>(null);
-  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [records, setRecords] = useCached<ProgressRecord[] | null>(`progress:${studentId}`, null);
+  const [photoUrls, setPhotoUrls] = useCached<Record<string, string>>(`progress-photos:${studentId}`, {});
 
   useEffect(() => {
     let active = true;
@@ -47,7 +48,7 @@ export function ProgressOverview({ studentId, target, aside }: { studentId: stri
       if (active) setPhotoUrls(urls);
     });
     return () => { active = false; };
-  }, [studentId]);
+  }, [studentId, setRecords, setPhotoUrls]);
 
   const chart = useMemo(
     () => [...(records ?? [])].reverse().filter(row => row.weight_kg !== null).map(row => ({ date: shortDate(row.recorded_on), weight: Number(row.weight_kg) })),

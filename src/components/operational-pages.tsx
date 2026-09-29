@@ -7,6 +7,7 @@ import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { WellnessManager } from "@/components/wellness-manager";
 import { PrepCoachCard } from "@/components/prep-coach-card";
 import { ProgressOverview } from "@/components/evolution-page";
+import { useCached } from "@/lib/page-cache";
 import { addStudentNote, createProfessionalInvite, getProfessionalOverview, getProfessionalStudentDetail, getProfessionalStudents, type Viewer } from "@/lib/evolink-data";
 import { PageSkeleton } from "@/components/ui/skeleton";
 
@@ -20,8 +21,8 @@ function EmptyCard({ title, text, action }: { title: string; text: string; actio
 }
 
 export function LiveProfessionalDashboard({ viewer }: { viewer: Viewer }) {
-  const [overview, setOverview] = useState<Awaited<ReturnType<typeof getProfessionalOverview>> | null>(null); const [invite, setInvite] = useState(""); const [inviteStatus, setInviteStatus] = useState(""); const router = useRouter();
-  useEffect(() => { getProfessionalOverview(viewer.id).then(setOverview); }, [viewer.id]);
+  const [overview, setOverview] = useCached<Awaited<ReturnType<typeof getProfessionalOverview>> | null>(`pro-overview:${viewer.id}`, null); const [invite, setInvite] = useState(""); const [inviteStatus, setInviteStatus] = useState(""); const router = useRouter();
+  useEffect(() => { getProfessionalOverview(viewer.id).then(setOverview); }, [viewer.id, setOverview]);
   async function createInvite() { setInviteStatus(""); const { data, error } = await createProfessionalInvite(viewer.id); if (error || !data) { setInviteStatus(error?.message ?? "Não foi possível criar o convite."); return; } setInvite(`${window.location.origin}/aluno/perfil?convite=${data.token}`); setInviteStatus("Convite criado. Envie o link ao aluno."); }
   async function copyInvite() { if (!invite) return; try { await navigator.clipboard.writeText(invite); setInviteStatus("Link copiado."); } catch { setInviteStatus("Não foi possível copiar automaticamente. Selecione o link para copiar."); } }
   const inviteAction = <div><Button onClick={createInvite}>Criar convite</Button>{invite && <div className="mt-4 rounded-xl bg-[#f3f8f5] p-3 text-left"><p className="text-xs font-bold text-[#087a50]">LINK PARA O ALUNO</p><p className="mt-1 break-all text-sm text-[#52665e]">{invite}</p><Button kind="outline" className="mt-3 py-2 text-xs" onClick={copyInvite}>Copiar link</Button></div>}{inviteStatus && <p className="mt-3 text-sm font-semibold text-[#087a50]">{inviteStatus}</p>}</div>;

@@ -6,6 +6,7 @@ import { Apple, Check, ChevronDown, Repeat2 } from "lucide-react";
 import { PageTitle, Shell } from "@/components/app-shell";
 import { ProgressBar } from "@/components/ui/motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCached } from "@/lib/page-cache";
 import { getStudentDiet, toggleMeal, type Meal, type Viewer } from "@/lib/evolink-data";
 
 type DietState = Awaited<ReturnType<typeof getStudentDiet>>;
@@ -17,8 +18,8 @@ const formatQuantity = (item: Meal["meal_items"][number]) => {
 };
 
 export function DietPage({ viewer }: { viewer: Viewer }) {
-  const [diet, setDiet] = useState<DietState | null>(null);
-  const [done, setDone] = useState<Set<string>>(new Set());
+  const [diet, setDiet] = useCached<DietState | null>(`diet:${viewer.id}`, null);
+  const [done, setDone] = useCached<Set<string>>(`diet-done:${viewer.id}`, new Set());
 
   useEffect(() => {
     let active = true;
@@ -28,7 +29,7 @@ export function DietPage({ viewer }: { viewer: Viewer }) {
       setDone(new Set(result.completedMealIds));
     });
     return () => { active = false; };
-  }, [viewer.id]);
+  }, [viewer.id, setDiet, setDone]);
 
   async function toggle(meal: Meal) {
     const next = !done.has(meal.id);

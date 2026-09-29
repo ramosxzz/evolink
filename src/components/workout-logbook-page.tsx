@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import type { Viewer } from "@/lib/evolink-data";
+import { hasCache, peekCache, useCached, writeCache } from "@/lib/page-cache";
 import {
   completeWorkout,
   getLogbook,
@@ -76,18 +77,43 @@ function formatVolume(value: number) {
     : `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(value)} kg`;
 }
 
+/** Set inputs for a workout: sets done in the open session, else last loads as hints. */
+export function buildDrafts(items: LogbookExercise[], activeSets: WorkoutSetLog[], historical: WorkoutSetLog[]) {
+  const next: Record<string, SetDraft> = {};
+  for (const exercise of items) {
+    const count = Math.max(1, exercise.sets ?? 3);
+    for (let number = 1; number <= count; number += 1) {
+      const active = activeSets.find((entry) => entry.workout_exercise_id === exercise.id && entry.set_number === number);
+      const previous = historical.find((entry) => entry.workout_exercise_id === exercise.id && entry.set_number === number);
+      next[setKey(exercise.id, number)] = {
+        load: active?.load_kg != null ? String(active.load_kg) : previous?.load_kg != null ? String(previous.load_kg) : "",
+        reps: active?.repetitions_completed != null ? String(active.repetitions_completed) : "",
+        rir: active?.rir != null ? String(active.rir) : exercise.target_rir != null ? String(exercise.target_rir) : "",
+        type: active?.set_type ?? "working",
+        completed: Boolean(active),
+        saving: false,
+        isPr: active?.is_personal_record ?? false,
+      };
+    }
+  }
+  const expanded: Record<string, boolean> = Object.fromEntries(items.map((exercise, index) => [exercise.id, index === 0 || activeSets.some((entry) => entry.workout_exercise_id === exercise.id)]));
+  return { drafts: next, expanded };
+}
+
 export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const [loading, setLoading] = useState(true);
+  // Cached per student so returning to this tab restores the workout (and typed sets) at once.
+  const base = `logbook:${viewer.id}`;
+  const [loading, setLoading] = useState(() => !hasCache(`${base}:loaded`));
   const [loadError, setLoadError] = useState("");
-  const [plan, setPlan] = useState<{ id: string; title: string; objective: string | null; estimatedMinutes: number | null } | null>(null);
-  const [exercises, setExercises] = useState<LogbookExercise[]>([]);
-  const [history, setHistory] = useState<WorkoutSetLog[]>([]);
-  const [session, setSession] = useState<WorkoutSession | null>(null);
+  const [plan, setPlan] = useCached<{ id: string; title: string; objective: string | null; estimatedMinutes: number | null } | null>(`${base}:plan`, null);
+  const [exercises, setExercises] = useCached<LogbookExercise[]>(`${base}:exercises`, []);
+  const [history, setHistory] = useCached<WorkoutSetLog[]>(`${base}:history`, []);
+  const [session, setSession] = useCached<WorkoutSession | null>(`${base}:session`, null);
   const [starting, setStarting] = useState(false);
-  const [drafts, setDrafts] = useState<Record<string, SetDraft>>({});
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [drafts, setDrafts] = useCached<Record<string, SetDraft>>(`${base}:drafts`, {});
+  const [expanded, setExpanded] = useCached<Record<string, boolean>>(`${base}:expanded`, {});
   const [elapsed, setElapsed] = useState(0);
   const [restSeconds, setRestSeconds] = useState(0);
   const [restTotal, setRestTotal] = useState(0);
@@ -98,29 +124,13 @@ export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
   const [finishing, setFinishing] = useState(false);
   const [message, setMessage] = useState("");
   const [summary, setSummary] = useState<CompletedSummary | null>(null);
-  const [plans, setPlans] = useState<WorkoutOption[]>([]);
-  const [suggestedPlanId, setSuggestedPlanId] = useState<string | null>(null);
+  const [plans, setPlans] = useCached<WorkoutOption[]>(`${base}:plans`, []);
+  const [suggestedPlanId, setSuggestedPlanId] = useCached<string | null>(`${base}:suggested`, null);
 
   function hydrateDrafts(items: LogbookExercise[], activeSets: WorkoutSetLog[], historical: WorkoutSetLog[]) {
-    const next: Record<string, SetDraft> = {};
-    for (const exercise of items) {
-      const count = Math.max(1, exercise.sets ?? 3);
-      for (let number = 1; number <= count; number += 1) {
-        const active = activeSets.find((entry) => entry.workout_exercise_id === exercise.id && entry.set_number === number);
-        const previous = historical.find((entry) => entry.workout_exercise_id === exercise.id && entry.set_number === number);
-        next[setKey(exercise.id, number)] = {
-          load: active?.load_kg != null ? String(active.load_kg) : previous?.load_kg != null ? String(previous.load_kg) : "",
-          reps: active?.repetitions_completed != null ? String(active.repetitions_completed) : "",
-          rir: active?.rir != null ? String(active.rir) : exercise.target_rir != null ? String(exercise.target_rir) : "",
-          type: active?.set_type ?? "working",
-          completed: Boolean(active),
-          saving: false,
-          isPr: active?.is_personal_record ?? false,
-        };
-      }
-    }
-    setDrafts(next);
-    setExpanded(Object.fromEntries(items.map((exercise, index) => [exercise.id, index === 0 || activeSets.some((entry) => entry.workout_exercise_id === exercise.id)])));
+    const next = buildDrafts(items, activeSets, historical);
+    setDrafts(next.drafts);
+    setExpanded(next.expanded);
   }
 
   async function load(planId?: string) {
@@ -150,15 +160,20 @@ export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
         setLoadError(result.error.message);
         return;
       }
+      // Same session still open: keep the sets typed on this device.
+      const keepDrafts = hasCache(`${base}:loaded`) && Boolean(result.session) && peekCache<WorkoutSession | null>(`${base}:session`)?.id === result.session?.id;
       setPlans(result.plans);
       setSuggestedPlanId("suggestedPlanId" in result ? result.suggestedPlanId ?? null : null);
       setPlan(result.plan);
       setExercises(result.exercises);
       setHistory(result.history);
       setSession(result.session);
-      hydrateDrafts(result.exercises, result.activeSets, result.history);
+      if (!keepDrafts) hydrateDrafts(result.exercises, result.activeSets, result.history);
+      writeCache(`${base}:loaded`, true);
     });
     return () => { active = false; };
+    // Loads once per student; the cached setters and helpers are stable for that student.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewer.id]);
   useEffect(() => {
     if (!session) return;

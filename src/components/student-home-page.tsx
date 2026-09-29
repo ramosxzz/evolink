@@ -7,6 +7,7 @@ import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
 import { Apple, ArrowRight, CheckCircle2, ClipboardCheck, Clock3, Dumbbell, GlassWater, MessageCircle, TrendingDown, TrendingUp } from "lucide-react";
 import { Button, Shell } from "@/components/app-shell";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
+import { useCached } from "@/lib/page-cache";
 import { addWater, getProgress, getStudentDiet, getWaterToday, getWeekCheckin, type Viewer } from "@/lib/evolink-data";
 import { getLogbook } from "@/lib/logbook-data";
 import { AchievementBadge } from "@/components/social/achievement-badge";
@@ -23,8 +24,8 @@ const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
 
 export function StudentHomePage({ viewer }: { viewer: Viewer }) {
   const router = useRouter();
-  const [data, setData] = useState<HomeData | null>(null);
-  const [water, setWater] = useState<number | null>(null);
+  const [data, setData] = useCached<HomeData | null>(`home:${viewer.id}`, null);
+  const [water, setWater] = useCached<number | null>(`water:${viewer.id}`, null);
 
   useEffect(() => {
     let active = true;
@@ -32,7 +33,7 @@ export function StudentHomePage({ viewer }: { viewer: Viewer }) {
       .then(([workout, diet, checkin, progress]) => { if (active) setData({ workout, diet, checkin, progress }); });
     getWaterToday(viewer.id).then(value => { if (active) setWater(value); });
     return () => { active = false; };
-  }, [viewer.id]);
+  }, [viewer.id, setData, setWater]);
 
   const firstName = viewer.fullName.split(" ")[0];
   const coach = viewer.counterpart?.fullName.split(" ")[0];

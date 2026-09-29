@@ -42,6 +42,7 @@ import {
 import { coachAccess, getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
 import { watchSystemTheme } from "@/lib/theme";
+import { prefetchStudentTabs } from "@/lib/prefetch";
 import { BillingPage } from "@/components/billing-page";
 import { CoachDirectory } from "@/components/portfolio/coach-directory";
 import { CoachPage } from "@/components/portfolio/coach-page";
@@ -79,6 +80,9 @@ export default function OperationalApp() {
       window.removeEventListener(VIEWER_CHANGED_EVENT, reload);
     };
   }, []);
+  useEffect(() => {
+    if (viewer?.role === "student") prefetchStudentTabs(viewer.id);
+  }, [viewer?.id, viewer?.role]);
   useEffect(() => {
     // The recovery link signs the user in; keep them on the new-password form.
     if (

@@ -7,6 +7,7 @@ import { Check, ChevronRight, ClipboardCheck, Copy, Search, UserPlus, Users } fr
 import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { Modal } from "@/components/ui/modal";
 import { ListSkeleton } from "@/components/ui/skeleton";
+import { useCached } from "@/lib/page-cache";
 import { createProfessionalInvite, getProfessionalOverview, type Viewer } from "@/lib/evolink-data";
 
 type Overview = Awaited<ReturnType<typeof getProfessionalOverview>>;
@@ -24,7 +25,7 @@ type Row = {
 
 export function StudentsPage({ viewer }: { viewer: Viewer }) {
   const router = useRouter();
-  const [overview, setOverview] = useState<Overview | null>(null);
+  const [overview, setOverview] = useCached<Overview | null>(`pro-students:${viewer.id}`, null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("todos");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -33,7 +34,7 @@ export function StudentsPage({ viewer }: { viewer: Viewer }) {
     let active = true;
     getProfessionalOverview(viewer.id).then(result => { if (active) setOverview(result); });
     return () => { active = false; };
-  }, [viewer.id]);
+  }, [viewer.id, setOverview]);
 
   const rows = useMemo<Row[]>(() => {
     if (!overview) return [];

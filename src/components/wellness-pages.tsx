@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Activity, Check, Flame, Footprints, HeartPulse, Moon, Pill, Plus, Sparkles, Timer, Trash2 } from "lucide-react";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
+import { useCached } from "@/lib/page-cache";
 import { addDays, localDate, weekStart } from "@/lib/dates";
 import type { Viewer } from "@/lib/evolink-data";
 import {
@@ -30,8 +31,8 @@ const logDay = (log: CardioLog) => localDate(new Date(log.completed_at));
 // Cardio ---------------------------------------------------------------------
 
 export function CardioPage({ viewer }: { viewer: Viewer }) {
-  const [plans, setPlans] = useState<CardioPlan[] | null>(null);
-  const [logs, setLogs] = useState<CardioLog[]>([]);
+  const [plans, setPlans] = useCached<CardioPlan[] | null>(`cardio-plans:${viewer.id}`, null);
+  const [logs, setLogs] = useCached<CardioLog[]>(`cardio-logs:${viewer.id}`, []);
   const [draft, setDraft] = useState<{ plan?: CardioPlan } | null>(null);
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export function CardioPage({ viewer }: { viewer: Viewer }) {
       setLogs(result.logs);
     });
     return () => { active = false; };
-  }, [viewer.id]);
+  }, [viewer.id, setPlans, setLogs]);
 
   const stats = useMemo(() => {
     const monday = weekStart();
@@ -238,8 +239,8 @@ const weekDays = () => Array.from({ length: 7 }, (_, index) => localDate(addDays
 
 export function HabitsPage({ viewer }: { viewer: Viewer }) {
   const reduceMotion = useReducedMotion();
-  const [goals, setGoals] = useState<HabitGoal[] | null>(null);
-  const [logs, setLogs] = useState<HabitLog[]>([]);
+  const [goals, setGoals] = useCached<HabitGoal[] | null>(`habit-goals:${viewer.id}`, null);
+  const [logs, setLogs] = useCached<HabitLog[]>(`habit-logs:${viewer.id}`, []);
   const today = localDate();
   const days = useMemo(() => weekDays(), []);
 
@@ -251,7 +252,7 @@ export function HabitsPage({ viewer }: { viewer: Viewer }) {
       setLogs(result.logs);
     });
     return () => { active = false; };
-  }, [viewer.id]);
+  }, [viewer.id, setGoals, setLogs]);
 
   const logFor = (goalId: string, day: string) => logs.find(log => log.habit_goal_id === goalId && log.logged_for === day);
   const doneToday = (goals ?? []).filter(goal => logFor(goal.id, today)?.completed).length;
