@@ -1,47 +1,104 @@
 "use client";
 
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import { achievementIcons } from "@/components/social/achievement-badge";
 import type { Achievement } from "@/lib/social-data";
 
-type Metal = { face: string; rim: string; edge: string; ribbon: [string, string]; ink: string };
+type Tier = Achievement["tier"];
 
-const metals: Record<Achievement["tier"], Metal> = {
-  bronze: {
-    face: "radial-gradient(circle at 32% 28%, #ffd9b0 0%, #e39a5b 28%, #b3652c 58%, #7a3f16 100%)",
-    rim: "conic-gradient(from 210deg, #7a3f16, #f3b27a, #8e4a1d, #ffcf9c, #7a3f16)",
-    edge: "#6b3512",
-    ribbon: ["#c0392b", "#8e1f14"],
-    ink: "#5a2a0c",
-  },
-  prata: {
-    face: "radial-gradient(circle at 32% 28%, #ffffff 0%, #dfe5ea 30%, #a9b4bd 62%, #6f7b85 100%)",
-    rim: "conic-gradient(from 210deg, #6f7b85, #ffffff, #8d99a3, #f2f5f7, #6f7b85)",
-    edge: "#5d6871",
-    ribbon: ["#2b6cb0", "#1a4378"],
-    ink: "#3b464f",
-  },
-  ouro: {
-    face: "radial-gradient(circle at 32% 28%, #fff8d6 0%, #ffd84d 26%, #d9a300 58%, #8f6400 100%)",
-    rim: "conic-gradient(from 210deg, #8f6400, #fff1a8, #b98900, #ffe680, #8f6400)",
-    edge: "#7a5500",
-    ribbon: ["#087a50", "#05482f"],
-    ink: "#5c4100",
-  },
-  diamante: {
-    face: "radial-gradient(circle at 32% 28%, #ffffff 0%, #c9f3ff 24%, #9fb7ff 52%, #6a5acd 100%)",
-    rim: "conic-gradient(from 210deg, #6a5acd, #e0f7ff, #7de2ff, #d7c8ff, #6a5acd)",
-    edge: "#4b3fa8",
-    ribbon: ["#6a1b9a", "#3d0f5a"],
-    ink: "#2c2470",
-  },
+const ribbons: Record<Tier, { base: string; dark: string; stripe: string }> = {
+  bronze: { base: "#b3261e", dark: "#7a140f", stripe: "#f4e6d4" },
+  prata: { base: "#1d5aa6", dark: "#123a6c", stripe: "#e9eef5" },
+  ouro: { base: "#087a50", dark: "#04462d", stripe: "#f3e3a6" },
+  diamante: { base: "#4b2a86", dark: "#2a1350", stripe: "#bfe9ff" },
 };
 
-const sizes = { sm: 56, md: 88, lg: 150 } as const;
+// Flat fallback when WebGL is unavailable.
+const fallbackFaces: Record<Tier, string> = {
+  bronze: "radial-gradient(circle at 32% 28%, #ffd9b0, #b3652c 60%, #6b3512)",
+  prata: "radial-gradient(circle at 32% 28%, #ffffff, #a9b4bd 60%, #5d6871)",
+  ouro: "radial-gradient(circle at 32% 28%, #fff4c2, #d9a300 60%, #7a5500)",
+  diamante: "radial-gradient(circle at 32% 28%, #ffffff, #9fb7ff 55%, #4b3fa8)",
+};
+
+const sizes = { sm: 56, md: 88, lg: 170 } as const;
+
+function useMedalImage(icon: string, tier: Tier) {
+  const [state, setState] = useState<{ key: string; url: string | null; failed: boolean }>({ key: "", url: null, failed: false });
+  const key = `${icon}:${tier}`;
+  useEffect(() => {
+    let active = true;
+    import("@/lib/medal-renderer")
+      .then(module => (module.webglAvailable() ? module.medalImage(icon, tier) : Promise.reject(new Error("sem WebGL"))))
+      .then(url => { if (active) setState({ key, url, failed: false }); })
+      .catch(() => { if (active) setState({ key, url: null, failed: true }); });
+    return () => { active = false; };
+  }, [icon, tier, key]);
+  return state.key === key ? state : { url: null, failed: false };
+}
+
+function Ribbon({ tier, diameter }: { tier: Tier; diameter: number }) {
+  const colors = ribbons[tier];
+  const id = useId().replace(/:/g, "");
+  return (
+    <svg viewBox="0 0 100 110" width={diameter * 0.62} height={diameter * 0.68} className="relative block" aria-hidden>
+      <defs>
+        {(["l", "r"] as const).map(side => (
+          <linearGradient key={side} id={`${id}-${side}`} x1="0" x2="1" y1="0" y2="0" gradientTransform={side === "l" ? "skewX(14)" : "skewX(-14)"}>
+            <stop offset="0" stopColor={colors.dark} />
+            <stop offset="0.14" stopColor={colors.base} />
+            <stop offset="0.38" stopColor={colors.base} />
+            <stop offset="0.38" stopColor={colors.stripe} />
+            <stop offset="0.62" stopColor={colors.stripe} />
+            <stop offset="0.62" stopColor={colors.base} />
+            <stop offset="0.86" stopColor={colors.base} />
+            <stop offset="1" stopColor={colors.dark} />
+          </linearGradient>
+        ))}
+        <linearGradient id={`${id}-shade`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#000" stopOpacity="0.25" />
+          <stop offset="0.25" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.18" />
+        </linearGradient>
+      </defs>
+      <polygon points="4,0 40,0 64,110 34,110" fill={`url(#${id}-l)`} />
+      <polygon points="4,0 40,0 64,110 34,110" fill={`url(#${id}-shade)`} />
+      <polygon points="60,0 96,0 66,110 36,110" fill={`url(#${id}-r)`} style={{ filter: "drop-shadow(-1.5px 0 1.5px rgba(0,0,0,.28))" }} />
+      <polygon points="60,0 96,0 66,110 36,110" fill={`url(#${id}-shade)`} />
+    </svg>
+  );
+}
+
+function FallbackCoin({ tier, icon, diameter }: { tier: Tier; icon: string; diameter: number }) {
+  const Icon = achievementIcons[icon] ?? achievementIcons.medal;
+  return (
+    <span className="absolute inset-0 grid place-items-center rounded-full shadow-[inset_0_2px_4px_rgba(255,255,255,.6),inset_0_-3px_6px_rgba(0,0,0,.35)]" style={{ background: fallbackFaces[tier] }}>
+      <Icon size={diameter * 0.4} strokeWidth={2.4} className="text-black/45" />
+    </span>
+  );
+}
+
+function LiveMedal({ icon, tier, spin, onFail }: { icon: string; tier: Tier; spin: boolean; onFail: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const reduceMotion = useReducedMotion();
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    let cancelled = false;
+    import("@/lib/medal-renderer").then(async module => {
+      if (!canvasRef.current || cancelled) return;
+      if (!module.webglAvailable()) return onFail();
+      const dispose = await module.mountLiveMedal(canvasRef.current, icon, tier, { spin, reduceMotion: Boolean(reduceMotion) });
+      if (cancelled) dispose(); else cleanup = dispose;
+    }).catch(onFail);
+    return () => { cancelled = true; cleanup?.(); };
+  }, [icon, tier, spin, reduceMotion, onFail]);
+  return <canvas ref={canvasRef} className="absolute -inset-[12.5%] h-[125%] w-[125%] cursor-grab touch-none active:cursor-grabbing" />;
+}
 
 /**
- * Metallic medal with real depth: stacked discs form the coin edge, so it
- * reads as a solid object when it tilts or spins.
+ * Metal medal rendered in real 3D (three.js): lists get a cached still that
+ * tilts under the pointer; the large size can run live, spinning and draggable.
  */
 export function Medal3D({
   achievement,
@@ -57,16 +114,17 @@ export function Medal3D({
   ribbon?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
-  const metal = metals[achievement.tier];
-  const Icon = achievementIcons[achievement.icon] ?? achievementIcons.medal;
   const diameter = sizes[size];
-  const thickness = Math.max(4, Math.round(diameter / 14));
+  const live = size === "lg";
+  const [liveFailed, setLiveFailed] = useState(false);
+  const still = useMedalImage(achievement.icon, achievement.tier);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
-  const rotateY = useSpring(useTransform(pointerX, [-0.5, 0.5], [-28, 28]), { stiffness: 180, damping: 16 });
-  const rotateX = useSpring(useTransform(pointerY, [-0.5, 0.5], [22, -22]), { stiffness: 180, damping: 16 });
-  const glareX = useTransform(pointerX, [-0.5, 0.5], ["20%", "80%"]);
-  const canTilt = interactive && !reduceMotion && !spin;
+  const rotateY = useSpring(useTransform(pointerX, [-0.5, 0.5], [-18, 18]), { stiffness: 200, damping: 18 });
+  const rotateX = useSpring(useTransform(pointerY, [-0.5, 0.5], [14, -14]), { stiffness: 200, damping: 18 });
+  const glareX = useTransform(pointerX, [-0.5, 0.5], ["15%", "85%"]);
+  const canTilt = interactive && !reduceMotion && !live;
+  const failLive = useCallback(() => setLiveFailed(true), []);
 
   function track(event: React.PointerEvent<HTMLDivElement>) {
     if (!canTilt) return;
@@ -75,77 +133,47 @@ export function Medal3D({
     pointerY.set((event.clientY - box.top) / box.height - 0.5);
   }
 
-  function reset() {
-    pointerX.set(0);
-    pointerY.set(0);
-  }
-
-  const face = (back = false) => (
-    <div
-      className="absolute inset-0 rounded-full"
-      style={{
-        background: metal.rim,
-        transform: back ? `rotateY(180deg) translateZ(${thickness / 2}px)` : `translateZ(${thickness / 2}px)`,
-        backfaceVisibility: "hidden",
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.35)",
-      }}
-    >
-      <div
-        className="absolute rounded-full"
-        style={{
-          inset: diameter * 0.09,
-          background: metal.face,
-          boxShadow: `inset 0 ${diameter * 0.03}px ${diameter * 0.05}px rgba(255,255,255,.55), inset 0 -${diameter * 0.04}px ${diameter * 0.07}px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.12)`,
-        }}
-      />
-      <div className="absolute inset-0 grid place-items-center" style={{ color: metal.ink, filter: "drop-shadow(0 1px 0 rgba(255,255,255,.7)) drop-shadow(0 -1px 0 rgba(0,0,0,.35))" }}>
-        <Icon size={diameter * 0.38} strokeWidth={2.4} />
-      </div>
-      {!back && (
-        <motion.div
-          className="pointer-events-none absolute inset-0 overflow-hidden rounded-full mix-blend-overlay"
-          style={{ background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,.85) 48%, transparent 62%)", backgroundSize: "250% 100%", backgroundPositionX: canTilt ? glareX : undefined }}
-          animate={canTilt || reduceMotion ? undefined : { backgroundPositionX: ["120%", "-20%"] }}
-          transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 1.6, ease: "easeInOut" }}
-        />
-      )}
-    </div>
-  );
-
   return (
     <div className="relative inline-flex flex-col items-center" style={{ width: diameter }}>
-      {ribbon && (
-        <div className="relative -mb-2 flex justify-center" style={{ height: diameter * 0.42 }} aria-hidden>
-          <span className="block origin-bottom -rotate-12" style={{ width: diameter * 0.26, height: "100%", background: `linear-gradient(90deg, ${metal.ribbon[0]} 0 40%, #f5f5f5 40% 60%, ${metal.ribbon[0]} 60%)`, clipPath: "polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)", boxShadow: "inset -3px 0 6px rgba(0,0,0,.25)" }} />
-          <span className="-ml-1 block origin-bottom rotate-12" style={{ width: diameter * 0.26, height: "100%", background: `linear-gradient(90deg, ${metal.ribbon[1]} 0 40%, #e5e5e5 40% 60%, ${metal.ribbon[1]} 60%)`, clipPath: "polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)", boxShadow: "inset 3px 0 6px rgba(0,0,0,.25)" }} />
-        </div>
-      )}
+      {ribbon && <div className="relative z-0 flex justify-center" style={{ marginBottom: -diameter * 0.06 }}><Ribbon tier={achievement.tier} diameter={diameter} /></div>}
       <div
         onPointerMove={track}
-        onPointerLeave={reset}
-        className="relative"
+        onPointerLeave={() => { pointerX.set(0); pointerY.set(0); }}
+        className="relative z-10"
         style={{ width: diameter, height: diameter, perspective: diameter * 5 }}
         role="img"
         aria-label={`Medalha ${achievement.title}`}
       >
-        <motion.div
-          className="relative h-full w-full"
-          style={{ transformStyle: "preserve-3d", rotateX: canTilt ? rotateX : 0, rotateY: canTilt ? rotateY : undefined }}
-          animate={spin && !reduceMotion ? { rotateY: [0, 720, 720 + 360] } : undefined}
-          transition={spin ? { duration: 2.6, times: [0, 0.6, 1], ease: [0.2, 0.8, 0.2, 1] } : undefined}
-        >
-          {/* Coin edge: stacked discs between the two faces. */}
-          {Array.from({ length: thickness }, (_, index) => (
-            <div
-              key={index}
-              className="absolute inset-0 rounded-full"
-              style={{ background: metal.edge, transform: `translateZ(${index - thickness / 2}px)`, filter: `brightness(${0.75 + (index / thickness) * 0.35})` }}
-            />
-          ))}
-          {face()}
-          {face(true)}
-        </motion.div>
-        <div className="pointer-events-none absolute -bottom-3 left-1/2 h-3 w-3/4 -translate-x-1/2 rounded-full bg-black/20 blur-md" aria-hidden />
+        {live && !liveFailed ? (
+          <LiveMedal icon={achievement.icon} tier={achievement.tier} spin={spin} onFail={failLive} />
+        ) : (
+          <motion.div className="absolute inset-0" style={{ rotateX: canTilt ? rotateX : 0, rotateY: canTilt ? rotateY : 0, transformStyle: "preserve-3d" }}>
+            {still.url ? (
+              <>
+                <motion.img
+                  src={still.url}
+                  alt=""
+                  draggable={false}
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="pointer-events-none absolute -inset-[12.5%] h-[125%] w-[125%] max-w-none select-none"
+                />
+                <motion.span
+                  className="pointer-events-none absolute inset-[3%] overflow-hidden rounded-full mix-blend-soft-light"
+                  style={{ background: "linear-gradient(115deg, transparent 32%, rgba(255,255,255,.9) 48%, transparent 64%)", backgroundSize: "260% 100%", backgroundPositionX: canTilt ? glareX : undefined }}
+                  animate={canTilt || reduceMotion ? undefined : { backgroundPositionX: ["120%", "-20%"] }}
+                  transition={{ duration: 3, repeat: Infinity, repeatDelay: 2.2, ease: "easeInOut" }}
+                />
+              </>
+            ) : still.failed ? (
+              <FallbackCoin tier={achievement.tier} icon={achievement.icon} diameter={diameter} />
+            ) : (
+              <span className="skeleton absolute inset-0 rounded-full" />
+            )}
+          </motion.div>
+        )}
+        <div className="pointer-events-none absolute -bottom-[10%] left-1/2 h-[9%] w-3/4 -translate-x-1/2 rounded-full bg-black/25 blur-md" aria-hidden />
       </div>
     </div>
   );

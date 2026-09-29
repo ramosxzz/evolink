@@ -122,7 +122,7 @@ export function AchievementsPage({ viewer }: { viewer: Viewer }) {
                 const value = Number(metrics[item.metric] ?? 0);
                 return (
                   <article key={item.code} className={`flex gap-4 rounded-3xl border bg-white p-4 soft-shadow transition ${earnedAt ? "border-[#e2ece6]" : "border-dashed border-[#dbe7e0]"}`}>
-                    <AchievementBadge achievement={item} earned={Boolean(earnedAt)} />
+                    {earnedAt ? <span className="shrink-0"><Medal3D achievement={item} size="sm" ribbon={false} /></span> : <AchievementBadge achievement={item} earned={false} />}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-bold leading-tight">{item.title}</p>
