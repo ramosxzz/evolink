@@ -8,7 +8,7 @@ import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { Modal } from "@/components/ui/modal";
 import { ProgressBar, Reveal } from "@/components/ui/motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Viewer } from "@/lib/evolink-data";
+import { GRACE_DAYS, refreshViewer, type Viewer } from "@/lib/evolink-data";
 import { getBillingOverview, getInvoiceStatus, money, simulatePayment, startCheckout, TRIAL_DAYS, type Invoice, type PlatformPlan } from "@/lib/billing-data";
 
 type Overview = Awaited<ReturnType<typeof getBillingOverview>>;
@@ -30,7 +30,7 @@ export function BillingPage({ viewer }: { viewer: Viewer }) {
   const [error, setError] = useState("");
   const [invoice, setInvoice] = useState<Invoice | null>(null);
 
-  const load = useCallback(() => getBillingOverview(coachId).then(setData), [coachId]);
+  const load = useCallback(() => { refreshViewer(); return getBillingOverview(coachId).then(setData); }, [coachId]);
   useEffect(() => {
     let active = true;
     getBillingOverview(coachId).then(result => { if (active) setData(result); });
@@ -46,11 +46,12 @@ export function BillingPage({ viewer }: { viewer: Viewer }) {
   }
 
   const subscription = data?.subscription;
-  const periodEnd = subscription && subscription.status === "active" ? new Date(subscription.current_period_end).getTime() : 0;
-  const trialEnd = data ? new Date(data.trialEndsAt).getTime() : 0;
-  const active = periodEnd > now;
-  const inTrial = !active && trialEnd > now && !subscription;
-  const daysLeft = Math.max(0, Math.ceil(((active ? periodEnd : trialEnd) - now) / DAY));
+  const periodEnd = subscription && subscription.status !== "canceled" ? new Date(subscription.current_period_end).getTime() : 0;
+  const running = periodEnd > now;
+  const active = running && subscription?.status === "active";
+  const inTrial = running && subscription?.status === "trial";
+  const graceLeft = !running && periodEnd ? Math.ceil((periodEnd + GRACE_DAYS * DAY - now) / DAY) : 0;
+  const daysLeft = Math.max(0, Math.ceil((periodEnd - now) / DAY));
   const currentPlan = data?.plans.find(plan => plan.id === subscription?.plan_id);
 
   return (
@@ -68,12 +69,12 @@ export function BillingPage({ viewer }: { viewer: Viewer }) {
             <section className="mt-6 overflow-hidden rounded-3xl bg-[#07352b] p-6 text-white shadow-[var(--card-shadow)] md:p-7">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-[#9fe0bf]">{active ? `Plano ${currentPlan?.name ?? ""}` : inTrial ? "Teste grátis" : "Sem plano ativo"}</p>
+                  <p className="text-sm font-semibold text-[#9fe0bf]">{active ? `Plano ${currentPlan?.name ?? ""}` : inTrial ? `Teste grátis do ${currentPlan?.name ?? "Pro"}` : graceLeft > 0 ? "Assinatura vencida" : "Sem plano ativo"}</p>
                   <h2 className="mt-1 text-2xl font-bold tracking-tight md:text-3xl">
-                    {active || inTrial ? <>{daysLeft} {daysLeft === 1 ? "dia restante" : "dias restantes"}</> : "Escolha um plano para continuar"}
+                    {active || inTrial ? <>{daysLeft} {daysLeft === 1 ? "dia restante" : "dias restantes"}</> : graceLeft > 0 ? <>Renove em até {graceLeft} {graceLeft === 1 ? "dia" : "dias"}</> : "Escolha um plano para continuar"}
                   </h2>
                   <p className="mt-1 text-sm text-white/70">
-                    {active ? `Válido até ${shortDate(subscription!.current_period_end)}. Pague antes para somar mais 30 dias.` : inTrial ? `Seu teste de ${TRIAL_DAYS} dias termina em ${shortDate(data.trialEndsAt)}.` : "Seus alunos e dados continuam salvos."}
+                    {active ? `Válido até ${shortDate(subscription!.current_period_end)}. Pague antes para somar mais 30 dias.` : inTrial ? `Seu teste de ${TRIAL_DAYS} dias termina em ${shortDate(subscription!.current_period_end)}. Se assinar antes, os dias restantes são somados.` : graceLeft > 0 ? "Depois disso a área do treinador fica bloqueada até a renovação." : "Seus alunos e dados continuam salvos."}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white/10 px-4 py-3 text-right">

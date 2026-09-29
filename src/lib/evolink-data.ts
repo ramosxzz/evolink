@@ -12,7 +12,23 @@ export type Viewer = {
   professionalId?: string;
   studentId?: string;
   counterpart?: { id: string; fullName: string };
+  subscription?: { status: "trial" | "active" | "canceled"; planId: string; periodEnd: string } | null;
 };
+
+export type CoachAccess = { state: "ok" | "ending" | "grace" | "expired"; daysLeft: number; trial: boolean };
+const DAY_MS = 86_400_000;
+export const GRACE_DAYS = 3;
+
+/** Access of a coach from the subscription period: warns in the last 3 days, then 3 days of grace. */
+export function coachAccess(subscription: Viewer["subscription"], now = Date.now()): CoachAccess {
+  if (!subscription || subscription.status === "canceled") return { state: "expired", daysLeft: 0, trial: false };
+  const left = new Date(subscription.periodEnd).getTime() - now;
+  const trial = subscription.status === "trial";
+  if (left > 3 * DAY_MS) return { state: "ok", daysLeft: Math.ceil(left / DAY_MS), trial };
+  if (left > 0) return { state: "ending", daysLeft: Math.ceil(left / DAY_MS), trial };
+  if (left > -GRACE_DAYS * DAY_MS) return { state: "grace", daysLeft: Math.ceil((left + GRACE_DAYS * DAY_MS) / DAY_MS), trial };
+  return { state: "expired", daysLeft: 0, trial };
+}
 
 export type Meal = {
   id: string;
@@ -58,7 +74,11 @@ async function loadViewer(): Promise<Viewer | null> {
   if (!profile) return null;
 
   if (profile.role === "professional") {
-    return { id: profile.id, fullName: profile.full_name, role: "professional", professionalId: profile.id };
+    const { data: subscription } = await supabase.from("coach_subscriptions").select("status, plan_id, current_period_end").eq("coach_id", profile.id).maybeSingle();
+    return {
+      id: profile.id, fullName: profile.full_name, role: "professional", professionalId: profile.id,
+      subscription: subscription ? { status: subscription.status, planId: subscription.plan_id, periodEnd: subscription.current_period_end } : null,
+    };
   }
 
   const [{ data: student }, { data: relation }, { data: access }] = await Promise.all([

@@ -1,4 +1,5 @@
 import { authEmail } from "@/lib/server/auth-emails";
+import { sendEmail } from "@/lib/server/send-email";
 import { verifyStandardWebhook } from "@/lib/server/standard-webhook";
 
 // Supabase "Send Email" auth hook: Supabase calls this instead of sending its
@@ -32,22 +33,8 @@ export async function POST(request: Request) {
   const email = authEmail({ kind, name: user.user_metadata?.full_name, link: kind === "reauthentication" ? undefined : link, code: data.token });
   const to = kind === "email_change" && user.new_email ? user.new_email : user.email;
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    if (process.env.NODE_ENV === "production") return failure(500, "RESEND_API_KEY não configurada.");
-    // Local development without Resend: log the link instead of sending.
-    console.info(`[send-email] ${kind} para ${to}: ${link ?? data.token}`);
-    return Response.json({});
-  }
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: process.env.EMAIL_FROM || "Evolink <admin@solairew.com.br>", to: [to], subject: email.subject, html: email.html, text: email.text }),
-  });
-  if (!response.ok) {
-    console.error(`[send-email] Resend respondeu ${response.status}: ${await response.text()}`);
-    return failure(502, "Não foi possível enviar o e-mail.");
-  }
+  if (process.env.NODE_ENV === "production" && !process.env.RESEND_API_KEY) return failure(500, "RESEND_API_KEY não configurada.");
+  if (!process.env.RESEND_API_KEY) console.info(`[send-email] ${kind} para ${to}: ${link ?? data.token}`);
+  if (!(await sendEmail({ to, ...email }))) return failure(502, "Não foi possível enviar o e-mail.");
   return Response.json({});
 }

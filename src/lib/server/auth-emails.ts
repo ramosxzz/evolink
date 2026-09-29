@@ -48,7 +48,12 @@ const copy: Record<AuthEmailKind, { subject: string; title: string; text: string
 const escape = (value: string) => value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] as string);
 
 export function authEmail({ kind, name, link, code }: { kind: string; name?: string | null; link?: string; code?: string }) {
-  const content = copy[(kind in copy ? kind : "magiclink") as AuthEmailKind];
+  return brandEmail({ ...copy[(kind in copy ? kind : "magiclink") as AuthEmailKind], name, link, code });
+}
+
+/** Evolink e-mail layout (green header, one call to action, footer). */
+export function brandEmail({ subject, title, text, button, footnote, name, link, code }: { subject: string; title: string; text: string; button: string; footnote: string; name?: string | null; link?: string; code?: string }) {
+  const content = { subject, title, text, button, footnote };
   const greeting = name ? `Olá, ${escape(name.split(" ")[0])}!` : "Olá!";
   const action = link && content.button
     ? `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:12px;background:#087a50;"><a href="${escape(link)}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">${content.button}</a></td></tr></table>
@@ -84,6 +89,6 @@ export function authEmail({ kind, name, link, code }: { kind: string; name?: str
   </body>
 </html>`;
 
-  const text = `${greeting}\n\n${content.title}\n${content.text}\n\n${link ?? code ?? ""}\n\n${content.footnote}`;
-  return { subject: content.subject, html, text };
+  const plain = `${greeting}\n\n${content.title}\n${content.text}\n\n${link ?? code ?? ""}\n\n${content.footnote}`;
+  return { subject: content.subject, html, text: plain };
 }

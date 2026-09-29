@@ -39,9 +39,10 @@ import {
   LiveProfessionalDashboard,
   LiveProfessionalStudentPage,
 } from "@/components/operational-pages";
-import { getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
+import { coachAccess, getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
 import { BillingPage } from "@/components/billing-page";
+import { isLockedPath, SubscriptionBanner, SubscriptionLocked } from "@/components/subscription-gate";
 
 const publicPaths = ["/", "/login", "/cadastro", "/recuperar-senha", "/redefinir-senha"] as const;
 
@@ -145,7 +146,10 @@ export default function OperationalApp() {
     );
   return (
     <AppFrame profile={viewer.role}>
-      <RouteContent pathname={pathname} viewer={viewer} inviteToken={searchParams.get("convite")} />
+      <SubscriptionBanner viewer={viewer} pathname={pathname} />
+      {viewer.role === "professional" && coachAccess(viewer.subscription).state === "expired" && isLockedPath(pathname)
+        ? <SubscriptionLocked />
+        : <RouteContent pathname={pathname} viewer={viewer} inviteToken={searchParams.get("convite")} />}
     </AppFrame>
   );
 }

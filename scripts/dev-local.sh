@@ -15,6 +15,7 @@ export NEXT_PUBLIC_SUPABASE_URL="$(value API_URL)"
 export NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$(value PUBLISHABLE_KEY)"
 export SUPABASE_SERVICE_ROLE_KEY="$(value SECRET_KEY)"
 export NEXT_PUBLIC_SITE_URL="http://localhost:${PORT:-3000}"
+export CRON_SECRET="${CRON_SECRET:-local-cron-secret}"
 
 echo "Usando Supabase local em $NEXT_PUBLIC_SUPABASE_URL (e-mails: $(value MAILPIT_URL))"
 exec npx --no-install next dev -p "${PORT:-3000}" "$@"
