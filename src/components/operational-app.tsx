@@ -15,6 +15,7 @@ import { EventsPage } from "@/components/events/events-page";
 import { LegalPage } from "@/components/legal-page";
 import { PlanBuilder } from "@/components/plan-builder";
 import { StudentHomePage } from "@/components/student-home-page";
+import { StudentsPage } from "@/components/students-page";
 import { StudentProfilePage } from "@/components/student-profile-page";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
 import { WorkoutLogbookPage } from "@/components/workout-logbook-page";
@@ -35,7 +36,6 @@ import {
   LiveProfessionalCheckins,
   LiveProfessionalDashboard,
   LiveProfessionalStudentPage,
-  LiveProfessionalStudentsPage,
 } from "@/components/operational-pages";
 import { getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
@@ -189,7 +189,7 @@ function RouteContent({ pathname, viewer, inviteToken }: { pathname: string; vie
   if (pathname === "/profissional/check-ins")
     return <LiveProfessionalCheckins viewer={viewer} />;
   if (pathname === "/profissional/alunos")
-    return <LiveProfessionalStudentsPage viewer={viewer} />;
+    return <StudentsPage viewer={viewer} />;
   if (pathname.startsWith("/profissional/alunos/"))
     return (
       <LiveProfessionalStudentPage

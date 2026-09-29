@@ -389,7 +389,33 @@ export function WorkoutLogbookPage({ viewer }: { viewer: Viewer }) {
 }
 
 function WorkoutIntro({ plan, exercises, starting, onStart }: { plan: { title: string; objective: string | null; estimatedMinutes: number | null }; exercises: LogbookExercise[]; starting: boolean; onStart: () => void }) {
-  return <section className="mt-7 overflow-hidden rounded-[2rem] bg-[#07352b] text-white shadow-xl shadow-emerald-950/10"><div className="p-6 md:p-9"><span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-[#b8e986]"><Flame size={14} /> TREINO PROGRAMADO</span><h2 className="mt-5 text-3xl font-black tracking-tight md:text-4xl">{plan.title}</h2><p className="mt-2 max-w-xl text-sm leading-relaxed text-emerald-100">{plan.objective || "Execute cada série com controle e registre seus números para acompanhar sua evolução."}</p><div className="mt-7 flex flex-wrap gap-3"><span className="rounded-xl bg-white/10 px-4 py-3 text-sm font-bold">{exercises.length} exercícios</span><span className="rounded-xl bg-white/10 px-4 py-3 text-sm font-bold">{plan.estimatedMinutes ?? 45} minutos</span><span className="rounded-xl bg-white/10 px-4 py-3 text-sm font-bold">Descanso automático</span></div><Button disabled={starting} onClick={onStart} className="mt-8 w-full bg-[#b8e986] py-4 text-base text-[#174237] hover:bg-[#c8f49d] sm:w-auto"><Play size={18} fill="currentColor" /> {starting ? "Iniciando..." : "Iniciar treino"}</Button></div><div className="grid grid-cols-3 border-t border-white/10 bg-black/10 px-5 py-4 text-center text-xs text-emerald-100"><span>Histórico de cargas</span><span>RIR por série</span><span>Recordes pessoais</span></div></section>;
+  return (
+    <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_1.1fr]">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#07352b] to-[#0b5a3f] p-6 text-white shadow-[var(--card-shadow)] md:p-8">
+        <Flame size={140} className="pointer-events-none absolute -bottom-8 -right-6 text-white/5" />
+        <h2 className="relative text-2xl font-bold tracking-tight md:text-3xl">{plan.title}</h2>
+        <p className="relative mt-2 max-w-md text-sm leading-relaxed text-emerald-100">{plan.objective || "Execute cada série com controle e registre seus números para acompanhar sua evolução."}</p>
+        <div className="relative mt-6 flex flex-wrap gap-2 text-sm font-semibold">
+          <span className="rounded-xl bg-white/10 px-3 py-2">{exercises.length} exercícios</span>
+          <span className="rounded-xl bg-white/10 px-3 py-2">~{plan.estimatedMinutes ?? 45} min</span>
+          <span className="rounded-xl bg-white/10 px-3 py-2">{exercises.reduce((total, exercise) => total + (exercise.sets ?? 3), 0)} séries</span>
+        </div>
+        <Button disabled={starting} onClick={onStart} className="relative mt-7 w-full bg-[#b8e986] py-3.5 text-base text-[#0d3a2c] hover:bg-[#c8f49d] sm:w-auto"><Play size={18} fill="currentColor" />{starting ? "Iniciando..." : "Iniciar treino"}</Button>
+      </div>
+      <ol className="rounded-3xl bg-white p-2 shadow-[var(--card-shadow)]">
+        {exercises.map((exercise, index) => (
+          <li key={exercise.id} className="flex items-center gap-3 rounded-2xl px-3 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-[#f0f4f2]">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--mint)] text-xs font-bold text-[var(--emerald)]">{index + 1}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{exercise.name}</span>
+              <span className="block text-xs text-[var(--muted)]">{exercise.sets ?? 3} × {exercise.repetitions ?? "10"}{exercise.rest_seconds ? ` · ${exercise.rest_seconds}s descanso` : ""}</span>
+            </span>
+            {exercise.suggested_load && <span className="shrink-0 rounded-lg bg-[#f3f7f5] px-2 py-1 text-xs font-semibold text-[#40554c]">{exercise.suggested_load}</span>}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
 }
 
 function MiniStat({ icon: Icon, label, value, className = "" }: { icon: typeof Clock3; label: string; value: string; className?: string }) {

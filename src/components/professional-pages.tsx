@@ -49,6 +49,7 @@ import {
 } from "@/lib/evolink-data";
 import { localDate } from "@/lib/dates";
 import { Modal } from "@/components/ui/modal";
+import { ActionMenu } from "@/components/ui/action-menu";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white soft-shadow";
 const field = "mt-2 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm outline-none transition placeholder:text-[#9aaba3] focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -461,5 +462,36 @@ export function ProfessionalFinancePage({ viewer }: { viewer: Viewer }) {
 function FinanceRowCard({ row, busy, onPaid, onAccess, onReminder }: { row: FinanceRow; busy: string; onPaid: () => void; onAccess: () => void; onReminder: () => void }) {
   const date = new Date(`${row.dueDate}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   const status = row.status === "paid" ? ["Pago", "bg-[#e7f4ec] text-[#087a50]"] : row.status === "overdue" ? ["Atrasado", "bg-[#fdebea] text-[#b94242]"] : row.status === "waived" ? ["Isento", "bg-[#eef2f0] text-[#61756d]"] : ["Pendente", "bg-[#fff1d2] text-[#a97000]"];
-  return <article className="grid gap-4 p-4 lg:grid-cols-[1.4fr_.65fr_.65fr_1fr] lg:items-center"><div className="flex items-center gap-3"><Avatar name={row.studentName} /><div><p className="text-sm font-bold">{row.studentName}</p><p className="mt-0.5 text-xs text-[#71837b]">{currency.format(row.amount)} · {row.autoSuspend ? `carência ${row.graceDays} dia(s)` : "sem bloqueio automático"}</p></div></div><div><p className="text-sm font-bold">{date}</p><p className="text-xs text-[#71837b]">vencimento</p></div><div className="flex flex-wrap gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${status[1]}`}>{status[0]}</span><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${row.accessStatus === "suspended" ? "bg-[#fdebea] text-[#b94242]" : "bg-[#e7f4ec] text-[#087a50]"}`}>{row.accessStatus === "suspended" ? "Suspenso" : "Em dia"}</span></div><div className="flex flex-wrap justify-start gap-2 lg:justify-end">{row.status !== "paid" && row.status !== "waived" && <Button kind="soft" className="px-3 py-2 text-xs" disabled={busy === `paid-${row.paymentId}`} onClick={onPaid}><CheckCircle2 size={15} /> Confirmar</Button>}{row.status !== "paid" && <Button kind="outline" className="px-3 py-2 text-xs" disabled={busy === `reminder-${row.paymentId}`} onClick={onReminder}><Bell size={15} /> Lembrar</Button>}<Button kind="outline" className="px-3 py-2 text-xs" disabled={busy === `access-${row.studentId}`} onClick={onAccess}><ShieldCheck size={15} /> {row.accessStatus === "suspended" ? "Liberar" : "Suspender"}</Button></div></article>;
+  const overdue = row.status === "overdue";
+  return (
+    <article className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-3 px-5 py-4 transition hover:bg-[#f8fbf9] md:grid-cols-[1.5fr_.8fr_1fr_auto]">
+      <div className="flex min-w-0 items-center gap-3">
+        <Avatar name={row.studentName} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{row.studentName}</p>
+          <p className="truncate text-xs text-[var(--muted)]">{currency.format(row.amount)}{row.autoSuspend ? ` · bloqueio após ${row.graceDays} ${row.graceDays === 1 ? "dia" : "dias"}` : ""}</p>
+        </div>
+      </div>
+      <div className="hidden md:block">
+        <p className={`text-sm font-semibold tabular ${overdue ? "text-[#b3362f]" : ""}`}>{date}</p>
+        <p className="text-xs text-[var(--muted)]">vencimento</p>
+      </div>
+      <div className="col-span-2 flex flex-wrap items-center gap-1.5 md:col-span-1">
+        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status[1]}`}>{status[0]}</span>
+        {row.accessStatus === "suspended" && <span className="rounded-full bg-[#fdecea] px-2.5 py-1 text-xs font-semibold text-[#b3362f]">Acesso suspenso</span>}
+        <span className="text-xs text-[var(--muted)] md:hidden">· vence {date}</span>
+      </div>
+      <div className="col-start-2 row-start-1 flex items-center gap-2 md:col-start-auto md:row-start-auto">
+        {row.status !== "paid" && row.status !== "waived" && (
+          <Button kind="soft" className="px-3 py-2 text-xs" disabled={busy === `paid-${row.paymentId}`} onClick={onPaid}><CheckCircle2 size={15} /><span className="hidden sm:inline">Confirmar</span></Button>
+        )}
+        <ActionMenu
+          actions={[
+            ...(row.status !== "paid" ? [{ label: "Enviar lembrete", icon: Bell, onSelect: onReminder, disabled: busy === `reminder-${row.paymentId}` }] : []),
+            { label: row.accessStatus === "suspended" ? "Liberar acesso" : "Suspender acesso", icon: ShieldCheck, onSelect: onAccess, danger: row.accessStatus !== "suspended", disabled: busy === `access-${row.studentId}` },
+          ]}
+        />
+      </div>
+    </article>
+  );
 }
