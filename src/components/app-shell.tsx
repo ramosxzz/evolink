@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Apple, Bell, BellRing, BookOpen, CalendarDays, ChevronRight, CircleDollarSign, ClipboardCheck, Dumbbell, Globe2, HeartPulse, Home, LayoutDashboard,
-  LayoutGrid, Library, LogOut, MessageCircle, Plus, Settings, Target, TrendingUp, Trophy, UserRound, Users,
+  Flag, LayoutGrid, Library, LogOut, Medal, MessageCircle, Plus, Settings, Target, TrendingUp, Trophy, UserRound, Users,
 } from "lucide-react";
 import { AchievementCelebration } from "@/components/social/achievement-celebration";
 import { Modal } from "@/components/ui/modal";
@@ -29,11 +29,13 @@ const studentNav: NavGroup[] = [
   { title: "Progresso", items: [
     { label: "Evolução", href: "/aluno/evolucao", icon: TrendingUp },
     { label: "Check-in", href: "/aluno/check-in", icon: ClipboardCheck },
+    { label: "Preparação", href: "/aluno/preparacao", icon: Flag },
     { label: "Conquistas", href: "/conquistas", icon: Trophy },
   ] },
   { title: "Comunidade", items: [
     { label: "Feed", href: "/aluno/comunidade", icon: Globe2 },
     { label: "Eventos", href: "/eventos", icon: CalendarDays },
+    { label: "Ranking", href: "/ranking", icon: Medal },
     { label: "Chat", href: "/aluno/chat", icon: MessageCircle },
   ] },
 ];
@@ -59,6 +61,7 @@ const professionalNav: NavGroup[] = [
   { title: "Comunidade", items: [
     { label: "Feed", href: "/profissional/comunidade", icon: Globe2 },
     { label: "Eventos", href: "/eventos", icon: CalendarDays },
+    { label: "Ranking", href: "/ranking", icon: Medal },
   ] },
 ];
 const professionalTabs = ["/profissional", "/profissional/alunos", "/profissional/check-ins", "/profissional/chat"];

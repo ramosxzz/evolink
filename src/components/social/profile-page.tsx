@@ -23,6 +23,7 @@ import {
   type Frame,
   type PublicProfile,
 } from "@/lib/social-data";
+import { getResults, placementLabel, type CompetitionResult } from "@/lib/prep-data";
 import { Modal } from "@/components/ui/modal";
 import { ListSkeleton, Skeleton } from "@/components/ui/skeleton";
 
@@ -118,6 +119,8 @@ export function ProfilePage({ viewer, profileId }: { viewer: Viewer; profileId: 
             )}
           </section>
         )}
+
+        {profile.role === "student" && <ResultsList athleteId={profileId} />}
 
         <h2 className="mt-7 font-bold">Publicações</h2>
         {posts === null ? (
@@ -242,5 +245,36 @@ function EditProfile({ profile, frames, earnedCodes, achievements, onClose, onSa
         </label>
         {error && <p className="mt-3 text-sm font-semibold text-[#b94242]">{error}</p>}
     </Modal>
+  );
+}
+
+function ResultsList({ athleteId }: { athleteId: string }) {
+  const [results, setResults] = useState<CompetitionResult[] | null>(null);
+  useEffect(() => {
+    let active = true;
+    getResults(athleteId).then(rows => { if (active) setResults(rows); });
+    return () => { active = false; };
+  }, [athleteId]);
+  if (!results?.length) return null;
+  const titles = results.filter(result => result.placement === 1 || result.is_overall).length;
+  const podiums = results.filter(result => result.placement && result.placement <= 3).length;
+  return (
+    <section className={`${card} mt-4`}>
+      <div className="flex items-center justify-between">
+        <h2 className="font-bold">Títulos e resultados</h2>
+        <span className="text-xs font-semibold text-[var(--muted)]">{titles} {titles === 1 ? "título" : "títulos"} · {podiums} {podiums === 1 ? "pódio" : "pódios"}</span>
+      </div>
+      <ul className="mt-3 divide-y divide-[#f0f4f2]">
+        {results.slice(0, 6).map(result => (
+          <li key={result.id} className="flex items-center gap-3 py-2.5">
+            <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold ${result.placement === 1 || result.is_overall ? "bg-[#fff1b8] text-[#8a6d00]" : "bg-[#f3f7f5] text-[var(--muted)]"}`}>{result.is_overall ? "OV" : result.placement ? `${result.placement}º` : "-"}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{result.event_name}</span>
+              <span className="block text-xs text-[var(--muted)]">{placementLabel(result)} · {result.category} · {new Date(`${result.competed_on}T12:00:00`).getFullYear()}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

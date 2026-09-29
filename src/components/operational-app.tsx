@@ -15,6 +15,8 @@ import { EventFormPage } from "@/components/events/event-form-page";
 import { EventsPage } from "@/components/events/events-page";
 import { LegalPage } from "@/components/legal-page";
 import { PlanBuilder } from "@/components/plan-builder";
+import { PrepPage } from "@/components/prep-page";
+import { RankingPage } from "@/components/ranking-page";
 import { StudentHomePage } from "@/components/student-home-page";
 import { StudentsPage } from "@/components/students-page";
 import { StudentProfilePage } from "@/components/student-profile-page";
@@ -155,6 +157,8 @@ function RouteContent({ pathname, viewer, inviteToken }: { pathname: string; vie
   if (pathname === "/aluno/comunidade" || pathname === "/profissional/comunidade")
     return <FeedPage viewer={viewer} />;
   if (pathname === "/conquistas") return <AchievementsPage viewer={viewer} />;
+  if (pathname === "/aluno/preparacao") return <PrepPage viewer={viewer} />;
+  if (pathname === "/ranking") return <RankingPage viewer={viewer} />;
   if (pathname === "/eventos") return <EventsPage viewer={viewer} />;
   if (pathname === "/eventos/novo") return <EventFormPage key="novo" viewer={viewer} />;
   if (pathname.startsWith("/eventos/")) {
