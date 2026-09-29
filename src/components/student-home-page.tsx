@@ -9,6 +9,8 @@ import { Button, Shell } from "@/components/app-shell";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
 import { addWater, getProgress, getStudentDiet, getWaterToday, getWeekCheckin, type Viewer } from "@/lib/evolink-data";
 import { getLogbook } from "@/lib/logbook-data";
+import { AchievementBadge } from "@/components/social/achievement-badge";
+import { getAchievementCatalog, getMyAchievements, levelFor, type Achievement } from "@/lib/social-data";
 
 type HomeData = {
   workout: Awaited<ReturnType<typeof getLogbook>>;
@@ -73,6 +75,9 @@ export function StudentHomePage({ viewer }: { viewer: Viewer }) {
         </Reveal>
         <Reveal index={4}>
           <ProgressCard data={data} target={viewer.student?.targetWeightKg ?? null} onOpen={() => router.push("/aluno/evolucao")} />
+        </Reveal>
+        <Reveal index={5}>
+          <RewardsCard viewerId={viewer.id} onOpen={() => router.push("/conquistas")} />
         </Reveal>
       </div>
     </Shell>
@@ -248,6 +253,46 @@ function ProgressCard({ data, target, onOpen }: { data: HomeData | null; target:
           )}
         </>
       )}
+    </button>
+  );
+}
+
+function RewardsCard({ viewerId, onOpen }: { viewerId: string; onOpen: () => void }) {
+  const [state, setState] = useState<{ streak: number; points: number; latest: Achievement | null; count: number } | null>(null);
+  useEffect(() => {
+    let active = true;
+    Promise.all([getAchievementCatalog(), getMyAchievements(viewerId)]).then(([catalog, mine]) => {
+      if (!active) return;
+      const earned = [...mine.earned].sort((a, b) => b.earned_at.localeCompare(a.earned_at));
+      const byCode = new Map(catalog.achievements.map(item => [item.code, item]));
+      setState({
+        streak: Number(mine.metrics.current_streak_days ?? 0),
+        points: earned.reduce((total, item) => total + (byCode.get(item.code)?.points ?? 0), 0),
+        latest: earned[0] ? byCode.get(earned[0].code) ?? null : null,
+        count: earned.length,
+      });
+    });
+    return () => { active = false; };
+  }, [viewerId]);
+  if (!state) return <Skeleton />;
+  const level = levelFor(state.points);
+  return (
+    <button onClick={onOpen} className={`${card} h-full w-full text-left transition hover:-translate-y-0.5`}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold tracking-[.12em] text-[#71837b]">CONQUISTAS</p>
+        <span className="rounded-full bg-[#07352b] px-2.5 py-1 text-[11px] font-bold text-[#b8e986]">Nível {level.level}</span>
+      </div>
+      <div className="mt-3 flex items-center gap-4">
+        {state.latest ? <AchievementBadge achievement={state.latest} earned size="sm" /> : <span className="grid h-10 w-10 place-items-center rounded-full bg-[#edf2ef] text-lg">🏅</span>}
+        <div className="min-w-0">
+          <p className="truncate font-bold">{state.latest ? state.latest.title : "Primeira medalha te espera"}</p>
+          <p className="text-xs text-[#71837b]">{state.count} medalhas · {state.points} pontos</p>
+        </div>
+      </div>
+      <p className={`mt-4 text-sm font-bold ${state.streak >= 3 ? "text-[#d98a00]" : "text-[#52665e]"}`}>
+        🔥 {state.streak} {state.streak === 1 ? "dia" : "dias"} em sequência
+      </p>
+      <div className="mt-2"><ProgressBar value={level.progress} className="bg-gradient-to-r from-[#087a50] to-[#b8e986]" /></div>
     </button>
   );
 }

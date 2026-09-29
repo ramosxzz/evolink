@@ -143,7 +143,7 @@ export default function OperationalApp() {
     return <FeedPage viewer={viewer} />;
   if (pathname === "/conquistas") return <AchievementsPage viewer={viewer} />;
   if (pathname.startsWith("/u/"))
-    return <ProfilePage key={pathname} viewer={viewer} profileId={pathname.split("/")[2] ?? ""} />;
+    return <ProfilePage key={pathname} viewer={viewer} profileId={pathname.split("/")[2] === "me" ? viewer.id : pathname.split("/")[2] ?? ""} />;
   if (pathname === "/aluno/check-in") return <LiveCheckin viewer={viewer} />;
   if (pathname === "/aluno/evolucao") return <EvolutionPage viewer={viewer} />;
   if (pathname === "/aluno/cardio") return <CardioPage viewer={viewer} />;
