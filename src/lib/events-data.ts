@@ -1,5 +1,6 @@
 "use client";
 
+import { resizeImage } from "@/lib/image";
 import { localDate } from "@/lib/dates";
 import { avatarUrl, type Author } from "@/lib/social-data";
 import { createClient } from "@/lib/supabase/client";
@@ -144,9 +145,10 @@ export async function saveEvent(professionalId: string, input: EventInput, cover
   const supabase = createClient();
   let coverPath: string | undefined;
   if (cover) {
-    const extension = cover.name.split(".").pop()?.toLowerCase() || "jpg";
-    coverPath = `${professionalId}/${crypto.randomUUID()}.${extension}`;
-    const { error } = await supabase.storage.from("event-covers").upload(coverPath, cover, { contentType: cover.type });
+    const image = await resizeImage(cover, 1600).catch((error: Error) => error);
+    if (image instanceof Error) return { id: null, error: image };
+    coverPath = `${professionalId}/${crypto.randomUUID()}.jpg`;
+    const { error } = await supabase.storage.from("event-covers").upload(coverPath, image, { contentType: image.type });
     if (error) return { id: null, error };
   }
   const payload = {

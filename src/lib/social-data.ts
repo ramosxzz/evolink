@@ -1,5 +1,6 @@
 "use client";
 
+import { resizeImage } from "@/lib/image";
 import { createClient } from "@/lib/supabase/client";
 
 export type Visibility = "coach" | "followers" | "community";
@@ -127,9 +128,13 @@ export async function getFeed(viewerId: string, scope: FeedScope, before?: strin
 export async function createPost(viewerId: string, input: { caption: string; files: File[]; visibility: Visibility; achievementCode?: string }) {
   const supabase = createClient();
   const paths: string[] = [];
-  for (const file of input.files.slice(0, 4)) {
-    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${viewerId}/${crypto.randomUUID()}.${extension}`;
+  for (const original of input.files.slice(0, 4)) {
+    const file = await resizeImage(original).catch((error: Error) => error);
+    if (file instanceof Error) {
+      if (paths.length) await supabase.storage.from("social-media").remove(paths);
+      return { error: file };
+    }
+    const path = `${viewerId}/${crypto.randomUUID()}.jpg`;
     const { error } = await supabase.storage.from("social-media").upload(path, file, { contentType: file.type });
     if (error) {
       if (paths.length) await supabase.storage.from("social-media").remove(paths);
@@ -237,9 +242,10 @@ export async function updateSocialProfile(profileId: string, values: { displayNa
 
 export async function uploadAvatar(profileId: string, file: File) {
   const supabase = createClient();
-  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${profileId}/avatar.${extension}`;
-  const { error } = await supabase.storage.from("avatars").upload(path, file, { contentType: file.type, upsert: true });
+  const image = await resizeImage(file, 640).catch((error: Error) => error);
+  if (image instanceof Error) return { error: image, url: null };
+  const path = `${profileId}/avatar.jpg`;
+  const { error } = await supabase.storage.from("avatars").upload(path, image, { contentType: image.type, upsert: true });
   if (error) return { error, url: null };
   const updatedAt = new Date().toISOString();
   const { error: updateError } = await supabase.from("social_profiles").update({ avatar_path: path, avatar_updated_at: updatedAt }).eq("id", profileId);

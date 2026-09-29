@@ -184,11 +184,11 @@ function EditProfile({ profile, frames, earnedCodes, achievements, onClose, onSa
 
   async function pickAvatar(file?: File) {
     if (!file) return;
-    if (!file.type.startsWith("image/") || file.size > 3 * 1024 * 1024) return setError("Use uma imagem de até 3 MB.");
-    setUploading(true);
+    if (!file.type.startsWith("image/") || file.size > 25 * 1024 * 1024) return setError("Use uma imagem JPG, PNG ou WebP de até 25 MB.");
+    setUploading(true); setError("");
     const { error: uploadError, url } = await uploadAvatar(profile.author.id, file);
     setUploading(false);
-    if (uploadError) return setError("Não foi possível enviar a foto.");
+    if (uploadError) return setError(uploadError.message.startsWith("Formato") ? uploadError.message : "Não foi possível enviar a foto. Tente outra imagem.");
     setAvatar(url);
   }
 
@@ -214,7 +214,7 @@ function EditProfile({ profile, frames, earnedCodes, achievements, onClose, onSa
             <span className="absolute inset-0 grid place-items-center rounded-full bg-black/40 text-white opacity-0 transition group-hover:opacity-100">{uploading ? "..." : <Camera size={20} />}</span>
           </button>
           <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={event => pickAvatar(event.target.files?.[0])} className="hidden" />
-          <p className="text-sm text-[#71837b]">Toque na foto para trocar. JPG, PNG ou WebP até 3 MB.</p>
+          <p className="text-sm text-[#71837b]">Toque na foto para trocar. JPG, PNG ou WebP.</p>
         </div>
         <label className="mt-5 block text-sm font-bold">Nome<input value={name} onChange={event => setName(event.target.value)} maxLength={80} className="mt-1.5 w-full rounded-xl border border-[#dbe7e0] px-4 py-3 text-sm font-normal outline-none focus:border-[#087a50]" /></label>
         <label className="mt-4 block text-sm font-bold">Bio<textarea value={bio} onChange={event => setBio(event.target.value)} maxLength={240} placeholder="Categoria, objetivo, títulos..." className="mt-1.5 min-h-20 w-full rounded-xl border border-[#dbe7e0] px-4 py-3 text-sm font-normal outline-none focus:border-[#087a50]" /></label>

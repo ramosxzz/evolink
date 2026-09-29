@@ -119,8 +119,8 @@ function Composer({ viewer, me }: { viewer: Viewer; me: Author | null }) {
 
   function pick(list: FileList | null) {
     if (!list) return;
-    const images = [...list].filter(file => file.type.startsWith("image/") && file.size <= 8 * 1024 * 1024);
-    if (images.length < list.length) setError("Use imagens de até 8 MB.");
+    const images = [...list].filter(file => file.type.startsWith("image/") && file.size <= 25 * 1024 * 1024);
+    if (images.length < list.length) setError("Use imagens de até 25 MB.");
     setFiles(current => [...current, ...images.map(file => ({ file, url: URL.createObjectURL(file) }))].slice(0, 4));
     if (inputRef.current) inputRef.current.value = "";
   }

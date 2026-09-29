@@ -41,6 +41,7 @@ import {
 } from "@/components/operational-pages";
 import { getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
+import { BillingPage } from "@/components/billing-page";
 
 const publicPaths = ["/", "/login", "/cadastro", "/recuperar-senha", "/redefinir-senha"] as const;
 
@@ -182,6 +183,8 @@ function RouteContent({ pathname, viewer, inviteToken }: { pathname: string; vie
     return <LiveProfessionalDashboard viewer={viewer} />;
   if (pathname === "/profissional/financeiro")
     return <ProfessionalFinancePage viewer={viewer} />;
+  if (pathname === "/profissional/assinatura")
+    return <BillingPage viewer={viewer} />;
   if (pathname === "/profissional/crm")
     return <ProfessionalCrmPage viewer={viewer} />;
   if (pathname === "/profissional/modelos")

@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
+import { BadgeCheck,
   Apple, Bell, BellRing, BookOpen, CalendarDays, ChevronRight, CircleDollarSign, ClipboardCheck, Dumbbell, Globe2, HeartPulse, Home, LayoutDashboard,
   Flag, LayoutGrid, Library, LogOut, Medal, MessageCircle, Plus, Settings, Target, TrendingUp, Trophy, UserRound, Users,
 } from "lucide-react";
@@ -57,6 +57,7 @@ const professionalNav: NavGroup[] = [
   { title: "Negócio", items: [
     { label: "Financeiro", href: "/profissional/financeiro", icon: CircleDollarSign },
     { label: "CRM e lembretes", href: "/profissional/crm", icon: BellRing },
+    { label: "Assinatura", href: "/profissional/assinatura", icon: BadgeCheck },
   ] },
   { title: "Comunidade", items: [
     { label: "Feed", href: "/profissional/comunidade", icon: Globe2 },

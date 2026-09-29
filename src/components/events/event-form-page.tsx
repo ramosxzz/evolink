@@ -129,7 +129,7 @@ export function EventFormPage({ viewer, eventId }: { viewer: Viewer; eventId?: s
               onChange={event => {
                 const file = event.target.files?.[0];
                 if (!file) return;
-                if (file.size > 5 * 1024 * 1024) return setError("A capa precisa ter até 5 MB.");
+                if (file.size > 25 * 1024 * 1024) return setError("A capa precisa ter até 25 MB.");
                 setCover({ file, url: URL.createObjectURL(file) });
               }}
             />

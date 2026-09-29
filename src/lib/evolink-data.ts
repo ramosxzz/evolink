@@ -1,5 +1,6 @@
 "use client";
 
+import { resizeImage } from "@/lib/image";
 import { localDate, startOfTodayIso, weekStart } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/client";
 
@@ -549,9 +550,10 @@ export async function addProgressRecord(studentId: string, weight: number, note:
   const supabase = createClient();
   const { data: record, error } = await supabase.from("progress_records").upsert({ student_id: studentId, recorded_on: today(), weight_kg: weight, note: note || null, ...(waist ? { waist_cm: waist } : {}) }, { onConflict: "student_id,recorded_on" }).select("id").single();
   if (error || !record || !photo) return { error };
-  const extension = photo.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${studentId}/${record.id}-${crypto.randomUUID()}.${extension}`;
-  const { error: uploadError } = await supabase.storage.from("progress-media").upload(path, photo, { contentType: photo.type, upsert: false });
+  const image = await resizeImage(photo, 2000, 0.9).catch((error: Error) => error);
+  if (image instanceof Error) return { error: image };
+  const path = `${studentId}/${record.id}-${crypto.randomUUID()}.jpg`;
+  const { error: uploadError } = await supabase.storage.from("progress-media").upload(path, image, { contentType: image.type, upsert: false });
   if (uploadError) return { error: uploadError };
   return supabase.from("progress_photos").insert({ student_id: studentId, progress_record_id: record.id, storage_path: path, angle: "front" });
 }

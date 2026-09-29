@@ -190,7 +190,7 @@ function RecordForm({ viewer, onSaved }: { viewer: Viewer; onSaved: () => void }
   function pick(file?: File) {
     if (!file) return;
     if (!file.type.startsWith("image/")) return setStatus({ kind: "error", text: "Escolha uma imagem (JPG, PNG ou WebP)." });
-    if (file.size > 8 * 1024 * 1024) return setStatus({ kind: "error", text: "A foto precisa ter até 8 MB." });
+    if (file.size > 25 * 1024 * 1024) return setStatus({ kind: "error", text: "A foto precisa ter até 25 MB." });
     setStatus(null);
     setPhoto({ file, url: URL.createObjectURL(file) });
   }
