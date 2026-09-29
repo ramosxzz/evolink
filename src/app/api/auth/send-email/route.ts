@@ -20,9 +20,15 @@ export async function POST(request: Request) {
 
   const { user, email_data: data } = JSON.parse(body) as HookPayload;
   const kind = data.email_action_type;
-  const link = data.token_hash
-    ? `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(data.token_hash)}&type=${encodeURIComponent(kind)}&redirect_to=${encodeURIComponent(data.redirect_to || data.site_url || "")}`
-    : undefined;
+  const site = process.env.PUBLIC_SITE_URL || "https://evolink.solairew.com.br";
+  // Recovery opens our page with the token hash; the page verifies it only when
+  // the new password is submitted. This works on any device (no PKCE verifier
+  // needed) and link scanners that open the email cannot burn the token.
+  const link = !data.token_hash
+    ? undefined
+    : kind === "recovery"
+      ? `${site}/redefinir-senha?token_hash=${encodeURIComponent(data.token_hash)}&type=recovery`
+      : `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(data.token_hash)}&type=${encodeURIComponent(kind)}&redirect_to=${encodeURIComponent(data.redirect_to || data.site_url || "")}`;
   const email = authEmail({ kind, name: user.user_metadata?.full_name, link: kind === "reauthentication" ? undefined : link, code: data.token });
   const to = kind === "email_change" && user.new_email ? user.new_email : user.email;
 

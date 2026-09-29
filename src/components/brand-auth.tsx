@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight, CheckCircle2, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -20,6 +20,7 @@ export function BrandAuth({ path }: { path: AuthPath }) {
   const signup = path === "/cadastro";
   const recovery = path === "/recuperar-senha";
   const reset = path === "/redefinir-senha";
+  const recoveryVerified = useRef(false);
 
   async function submit(form: FormData) {
     setLoading(true); setFeedback(null);
@@ -36,6 +37,12 @@ export function BrandAuth({ path }: { path: AuthPath }) {
       if (reset) {
         if (password.length < 8) throw new Error("A senha precisa ter pelo menos 8 caracteres.");
         if (password !== String(form.get("passwordConfirm") || "")) throw new Error("As senhas não conferem.");
+        const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
+        if (tokenHash && !recoveryVerified.current) {
+          const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+          if (verifyError) throw new Error("expired");
+          recoveryVerified.current = true;
+        }
         const { data, error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
         const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
