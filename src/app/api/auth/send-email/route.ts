@@ -28,6 +28,7 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
+    if (process.env.NODE_ENV === "production") return failure(500, "RESEND_API_KEY não configurada.");
     // Local development without Resend: log the link instead of sending.
     console.info(`[send-email] ${kind} para ${to}: ${link ?? data.token}`);
     return Response.json({});
