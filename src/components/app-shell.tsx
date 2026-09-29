@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BadgeCheck, BriefcaseBusiness, UserSearch,
+import { Monitor, Moon, Sun, BadgeCheck, BriefcaseBusiness, UserSearch,
   Apple, Bell, BellRing, BookOpen, CalendarDays, ChevronRight, CircleDollarSign, ClipboardCheck, Dumbbell, Globe2, HeartPulse, Home, LayoutDashboard,
   Flag, LayoutGrid, Library, LogOut, Medal, MessageCircle, Plus, Settings, Target, TrendingUp, Trophy, UserRound, Users,
 } from "lucide-react";
@@ -12,6 +12,7 @@ import { AchievementCelebration } from "@/components/social/achievement-celebrat
 import { Modal } from "@/components/ui/modal";
 import { getNotifications, getViewer, markNotificationsRead } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
+import { getThemeChoice, setThemeChoice, type ThemeChoice } from "@/lib/theme";
 
 type Profile = "student" | "professional";
 type NavItem = { label: string; href: string; icon: typeof Home };
@@ -266,6 +267,7 @@ function UserMenu({ profile, name, onNavigate, onSignOut, compact = false }: { p
                 <item.icon size={16} className="text-[var(--muted)]" />{item.label}
               </button>
             ))}
+            <ThemeSwitcher />
             <div className="my-1 h-px bg-[var(--line)]" />
             <button role="menuitem" onClick={onSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#b94242] transition hover:bg-[#fdf1f0]">
               <LogOut size={16} />Sair
@@ -273,6 +275,29 @@ function UserMenu({ profile, name, onNavigate, onSignOut, compact = false }: { p
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function ThemeSwitcher() {
+  const [choice, setChoice] = useState<ThemeChoice>(() => getThemeChoice());
+  const options: [ThemeChoice, string, typeof Sun][] = [["light", "Claro", Sun], ["dark", "Escuro", Moon], ["system", "Sistema", Monitor]];
+  return (
+    <div className="px-1.5 py-1.5">
+      <p className="px-1.5 pb-1.5 text-xs font-semibold text-[var(--muted)]">Aparência</p>
+      <div className="grid grid-cols-3 gap-1 rounded-xl bg-[var(--mint)] p-1" role="radiogroup" aria-label="Aparência">
+        {options.map(([value, label, Icon]) => (
+          <button
+            key={value}
+            role="radio"
+            aria-checked={choice === value}
+            onClick={() => { setChoice(value); setThemeChoice(value); }}
+            className={`flex flex-col items-center gap-0.5 rounded-lg py-1.5 text-[11px] font-semibold transition ${choice === value ? "bg-[var(--card)] text-[var(--ink)] shadow-sm" : "text-[var(--muted)] hover:text-[var(--ink)]"}`}
+          >
+            <Icon size={15} />{label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -411,7 +436,7 @@ function Avatar({ name, className = "" }: { name: string; className?: string }) 
 type ButtonKind = "primary" | "soft" | "outline" | "ghost" | "danger";
 const buttonKinds: Record<ButtonKind, string> = {
   primary: "bg-[var(--emerald)] text-white shadow-[0_1px_2px_rgba(8,122,80,.3),inset_0_1px_0_rgba(255,255,255,.12)] hover:bg-[var(--emerald-dark)]",
-  soft: "bg-[var(--mint)] text-[var(--emerald-dark)] hover:bg-[#dcefe4]",
+  soft: "bg-[var(--mint)] text-[var(--soft-ink)] hover:bg-[#dcefe4]",
   outline: "border border-[var(--line)] bg-white text-[var(--ink)] hover:border-[#c7d9cf] hover:bg-[#f8fbf9]",
   ghost: "text-[var(--ink)] hover:bg-[#eef4f0]",
   danger: "bg-[#fdecea] text-[#b3362f] hover:bg-[#fadcd8]",

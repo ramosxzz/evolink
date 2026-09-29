@@ -41,6 +41,7 @@ import {
 } from "@/components/operational-pages";
 import { coachAccess, getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
+import { watchSystemTheme } from "@/lib/theme";
 import { BillingPage } from "@/components/billing-page";
 import { CoachDirectory } from "@/components/portfolio/coach-directory";
 import { CoachPage } from "@/components/portfolio/coach-page";
@@ -58,6 +59,7 @@ export default function OperationalApp() {
     window.sessionStorage.removeItem("evolink-demo-role");
     if ("serviceWorker" in navigator)
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    return watchSystemTheme();
   }, []);
   useEffect(() => {
     const reload = () =>

@@ -1,8 +1,22 @@
 @import "tailwindcss";
+@import "./theme-dark.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --ink:#10291f; --muted:#5f7169; --line:#e3ebe6; --mint:#eaf5ef; --emerald:#087a50; --emerald-dark:#065f3e;
-  --lime:#b8e986; --surface:#f4f7f5; --ring:#d5efe0; --card-shadow:0 1px 2px rgba(16,46,37,.05), 0 8px 24px -12px rgba(16,46,37,.12);
+  --lime:#b8e986; --surface:#f4f7f5; --card:#ffffff; --ring:#d5efe0; --card-shadow:0 1px 2px rgba(16,46,37,.05), 0 8px 24px -12px rgba(16,46,37,.12);
+  --skeleton-a:#e8efeb; --skeleton-b:#f5f9f7; --scrollbar:#c7d8d0; --soft-ink:#065f3e;
+  --water-1:rgba(191,227,251,.8); --water-2:rgba(155,209,247,.75); --water-3:rgba(109,184,238,.8); --wave-back:#a9d9f8; --wave-front:#bfe3fb;
+  color-scheme:light;
+}
+/* Dark theme: toggled by the "dark" class on <html> (see src/lib/theme.ts). */
+html.dark {
+  --ink:#e6efea; --muted:#9aaea5; --line:#24332d; --mint:#16291f; --emerald:#1a9e68; --emerald-dark:#138a59;
+  --surface:#0c1411; --card:#131d19; --ring:#1d3a2c; --card-shadow:0 1px 2px rgba(0,0,0,.35), 0 10px 28px -14px rgba(0,0,0,.7);
+  --skeleton-a:#18231f; --skeleton-b:#223029; --scrollbar:#2b3b34; --soft-ink:#86e3b5;
+  --water-1:rgba(38,104,150,.55); --water-2:rgba(30,90,135,.6); --water-3:rgba(22,74,116,.7); --wave-back:#23628e; --wave-front:#2b72a3;
+  color-scheme:dark;
 }
 * { box-sizing:border-box; }
 html { background:var(--surface); }
@@ -13,18 +27,18 @@ button { cursor:pointer; touch-action:manipulation; }
 button:not(:disabled) { transition-property:transform, background-color, border-color, color, box-shadow, opacity; transition-duration:180ms; transition-timing-function:cubic-bezier(.16,1,.3,1); }
 button:not(:disabled):active { transform:translateY(1px) scale(.985); }
 ::-webkit-scrollbar { width:7px; height:7px; }
-::-webkit-scrollbar-thumb { background:#c7d8d0; border-radius:99px; }
+::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:99px; }
 @keyframes rise { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
 .rise { animation:rise .45s ease both; }
 .soft-shadow { box-shadow:var(--card-shadow); }
 /* Skeleton shimmer: a light band sweeping across the placeholder. */
 @keyframes shimmer { from { background-position:150% 0 } to { background-position:-50% 0 } }
-.skeleton { background:linear-gradient(100deg,#e8efeb 30%,#f5f9f7 50%,#e8efeb 70%); background-size:250% 100%; animation:shimmer 1.4s ease-in-out infinite; }
+.skeleton { background:linear-gradient(100deg,var(--skeleton-a) 30%,var(--skeleton-b) 50%,var(--skeleton-a) 70%); background-size:250% 100%; animation:shimmer 1.4s ease-in-out infinite; }
 .tabular { font-variant-numeric:tabular-nums; }
 /* Older loading blocks use animate-pulse: render their leaf blocks as shimmer skeletons. */
 .animate-pulse { animation:none; }
 .animate-pulse:not(:has(*)), .animate-pulse > :not(:has(*)), .animate-pulse > * > :not(:has(*)) {
-  background:linear-gradient(100deg,#e8efeb 30%,#f5f9f7 50%,#e8efeb 70%) !important; background-size:250% 100% !important;
+  background:linear-gradient(100deg,var(--skeleton-a) 30%,var(--skeleton-b) 50%,var(--skeleton-a) 70%) !important; background-size:250% 100% !important;
   animation:shimmer 1.4s ease-in-out infinite; box-shadow:none !important; border-color:transparent !important;
 }
 /* Profile frames: the ring is the element's background, the photo sits on top. */

@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:local": "bash scripts/dev-local.sh",
+    "prebuild": "node scripts/gen-dark-theme.mjs",
+    "theme:dark": "node scripts/gen-dark-theme.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -101,12 +101,12 @@ export function ProgressOverview({ studentId, target, aside }: { studentId: stri
                       <stop offset="100%" stopColor="#087a50" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#edf2ef" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#71837b" }} axisLine={false} tickLine={false} />
-                  <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={{ fontSize: 11, fill: "#71837b" }} axisLine={false} tickLine={false} tickFormatter={value => Number(value).toFixed(0)} />
-                  <Tooltip formatter={value => [kg(Number(value)), "Peso"]} contentStyle={{ borderRadius: 12, border: "1px solid #e2ece6", fontSize: 12 }} />
+                  <CartesianGrid stroke="var(--line)" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+                  <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} tickFormatter={value => Number(value).toFixed(0)} />
+                  <Tooltip formatter={value => [kg(Number(value)), "Peso"]} contentStyle={{ borderRadius: 12, border: "1px solid var(--line)", background: "var(--card)", color: "var(--ink)", fontSize: 12 }} />
                   {target && <ReferenceLine y={Number(target)} stroke="#b8a000" strokeDasharray="4 4" label={{ value: "Meta", fontSize: 11, fill: "#9a6800", position: "insideTopRight" }} />}
-                  <Area type="monotone" dataKey="weight" stroke="#087a50" strokeWidth={2.5} fill="url(#evolutionWeight)" dot={{ r: 3, fill: "#087a50" }} activeDot={{ r: 5 }} />
+                  <Area type="monotone" dataKey="weight" stroke="var(--emerald)" strokeWidth={2.5} fill="url(#evolutionWeight)" dot={{ r: 3, fill: "#087a50" }} activeDot={{ r: 5 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

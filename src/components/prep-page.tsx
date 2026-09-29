@@ -155,7 +155,7 @@ function WeightCard({ prep, weights, daysLeft }: { prep: ContestPrep; weights: {
                   </defs>
                   <YAxis hide domain={[(min: number) => Math.min(min, target ?? min) - 1, "dataMax + 1"]} />
                   {target !== null && <ReferenceLine y={target} stroke="#d9a300" strokeDasharray="4 4" />}
-                  <Area type="monotone" dataKey="weight_kg" stroke="#087a50" strokeWidth={2} fill="url(#prepWeight)" />
+                  <Area type="monotone" dataKey="weight_kg" stroke="var(--emerald)" strokeWidth={2} fill="url(#prepWeight)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

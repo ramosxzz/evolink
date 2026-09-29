@@ -156,7 +156,7 @@ function WaterFill({ level, splash, reduceMotion }: { level: number; splash: num
       animate={{ height }}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 55, damping: 11, mass: 1.1 }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-[#bfe3fb]/80 via-[#9bd1f7]/75 to-[#6db8ee]/80" />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, var(--water-1), var(--water-2), var(--water-3))" }} />
       <motion.div
         key={splash}
         className="absolute inset-x-0 bottom-full h-5 origin-bottom"
@@ -166,11 +166,11 @@ function WaterFill({ level, splash, reduceMotion }: { level: number; splash: num
       >
         <motion.svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute bottom-0 left-0 h-full w-[200%]"
           animate={reduceMotion ? undefined : { x: ["0%", "-50%"] }} transition={{ duration: 7, repeat: Infinity, ease: "linear" }}>
-          <path d={backWave} fill="#a9d9f8" fillOpacity="0.7" />
+          <path d={backWave} fill="var(--wave-back)" fillOpacity="0.7" />
         </motion.svg>
         <motion.svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute -bottom-px left-0 h-[85%] w-[200%]"
           animate={reduceMotion ? undefined : { x: ["-50%", "0%"] }} transition={{ duration: 4.5, repeat: Infinity, ease: "linear" }}>
-          <path d={frontWave} fill="#bfe3fb" fillOpacity="0.95" />
+          <path d={frontWave} fill="var(--wave-front)" fillOpacity="0.95" />
         </motion.svg>
       </motion.div>
       {!reduceMotion && splash > 0 && (
@@ -315,7 +315,7 @@ function ProgressCard({ data, target, onOpen }: { data: HomeData | null; target:
                     </linearGradient>
                   </defs>
                   <YAxis hide domain={["dataMin - 1", "dataMax + 1"]} />
-                  <Area type="monotone" dataKey="weight" stroke="#087a50" strokeWidth={2} fill="url(#homeWeight)" />
+                  <Area type="monotone" dataKey="weight" stroke="var(--emerald)" strokeWidth={2} fill="url(#homeWeight)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
