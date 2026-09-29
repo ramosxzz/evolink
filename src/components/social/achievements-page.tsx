@@ -95,7 +95,7 @@ export function AchievementsPage({ viewer }: { viewer: Viewer }) {
       {earned.size > 0 && (
         <Reveal index={1} className="mt-6 overflow-hidden rounded-3xl border border-[#e2ece6] bg-[radial-gradient(circle_at_50%_0%,#ffffff_0%,#eef5f1_70%)] p-6 soft-shadow">
           <h2 className="font-bold">Vitrine</h2>
-          <p className="text-xs text-[#71837b]">Passe o dedo ou o mouse sobre as medalhas.</p>
+          <p className="text-xs text-[#71837b]">Suas medalhas mais recentes.</p>
           <div className="mt-5 flex gap-6 overflow-x-auto pb-4 pt-2">
             {catalog.achievements
               .filter(item => earned.has(item.code))
@@ -122,7 +122,7 @@ export function AchievementsPage({ viewer }: { viewer: Viewer }) {
                 const value = Number(metrics[item.metric] ?? 0);
                 return (
                   <article key={item.code} className={`flex gap-4 rounded-3xl border bg-white p-4 soft-shadow transition ${earnedAt ? "border-[#e2ece6]" : "border-dashed border-[#dbe7e0]"}`}>
-                    {earnedAt ? <span className="shrink-0"><Medal3D achievement={item} size="sm" ribbon={false} /></span> : <AchievementBadge achievement={item} earned={false} />}
+                    <AchievementBadge achievement={item} earned={Boolean(earnedAt)} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-bold leading-tight">{item.title}</p>

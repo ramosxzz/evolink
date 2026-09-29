@@ -113,7 +113,7 @@ export function ProfilePage({ viewer, profileId }: { viewer: Viewer; profileId: 
             <p className="mt-1.5 text-xs text-[#71837b]">{level.toNext} pontos para o nível {level.level + 1}</p>
             {showcase.length > 0 ? (
               <div className="mt-5 flex flex-wrap gap-4">
-                {showcase.map(item => <Medal3D key={item.code} achievement={item} size="sm" ribbon={false} />)}
+                {showcase.map(item => <Medal3D key={item.code} achievement={item} size="sm" />)}
               </div>
             ) : (
               <p className="mt-4 text-sm text-[#71837b]">Nenhuma medalha ainda.</p>

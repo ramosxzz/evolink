@@ -108,7 +108,7 @@ export function PostCard({ post, viewerId, achievements, onDeleted }: { post: Fe
 
       {achievement && (
         <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#fffaf0] p-4">
-          <Medal3D achievement={achievement} size="sm" ribbon={false} />
+          <Medal3D achievement={achievement} size="sm" />
           <div>
             <p className="text-xs font-bold tracking-[.12em] text-[#9a6800]">NOVA CONQUISTA</p>
             <p className="font-bold">{achievement.title}</p>

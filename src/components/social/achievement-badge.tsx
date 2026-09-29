@@ -1,6 +1,7 @@
 "use client";
 
-import { ClipboardCheck, Crown, Dumbbell, Flag, Flame, Footprints, Heart, Lock, Medal, MessageCircle, Route, Scale, Trophy, Weight } from "lucide-react";
+import { ClipboardCheck, Crown, Dumbbell, Flag, Flame, Footprints, Heart, Medal, MessageCircle, Route, Scale, Trophy, Weight } from "lucide-react";
+import { FlatCoin } from "@/components/social/medal-3d";
 import type { Achievement } from "@/lib/social-data";
 
 export const achievementIcons: Record<string, typeof Medal> = {
@@ -15,18 +16,7 @@ export const tierStyles: Record<Achievement["tier"], { label: string; badge: str
   diamante: { label: "Diamante", badge: "bg-gradient-to-br from-[#aeefff] via-[#c9b3ff] to-[#7de2ff] text-[#23225a]", ring: "ring-[#9fd8ff]", text: "text-[#4b3fa8]" },
 };
 
-/** Round medal: colored by tier when earned, grey with a lock when not. */
+/** Flat coin medal: metal colors when earned, grey with a lock when not. */
 export function AchievementBadge({ achievement, earned, size = "md" }: { achievement: Pick<Achievement, "icon" | "tier" | "title">; earned: boolean; size?: "sm" | "md" | "lg" }) {
-  const Icon = achievementIcons[achievement.icon] ?? Medal;
-  const dimension = size === "sm" ? "h-10 w-10" : size === "lg" ? "h-20 w-20" : "h-14 w-14";
-  const iconSize = size === "sm" ? 18 : size === "lg" ? 34 : 24;
-  return (
-    <span
-      title={achievement.title}
-      className={`relative grid shrink-0 place-items-center rounded-full shadow-sm ${dimension} ${earned ? `${tierStyles[achievement.tier].badge} ring-4 ${tierStyles[achievement.tier].ring} ring-offset-2` : "bg-[#edf2ef] text-[#b3c2bb]"}`}
-    >
-      <Icon size={iconSize} />
-      {!earned && <Lock size={12} className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white p-0.5 text-[#91a39b]" />}
-    </span>
-  );
+  return <FlatCoin icon={achievement.icon} tier={achievement.tier} locked={!earned} size={size === "sm" ? 40 : size === "lg" ? 80 : 56} title={achievement.title} />;
 }
