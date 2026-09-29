@@ -22,7 +22,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Button, PageTitle, Shell } from "@/components/evolink-app";
+import { Button, PageTitle, Shell } from "@/components/app-shell";
 import type { Viewer } from "@/lib/evolink-data";
 import {
   completeWorkout,

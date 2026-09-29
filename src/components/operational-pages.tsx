@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Activity, AlertCircle, Apple, BellRing, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleDollarSign, ClipboardCheck, Dumbbell, GlassWater, HeartPulse, MessageCircle, Play, Plus, Search, Send, ShieldCheck, Target, UserRound, Weight } from "lucide-react";
-import { Avatar, Button, PageTitle, Shell } from "@/components/evolink-app";
+import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { addProgressRecord, addStudentNote, addWater, createProfessionalInvite, getMessages, getProfessionalCheckins, getProfessionalOverview, getProfessionalStudentDetail, getProfessionalStudents, getProgress, getStudentDiet, getStudentWorkout, getWaterToday, logExercise, publishDiet, publishWorkout, redeemProfessionalInvite, reviewCheckin, saveCheckin, sendMessage, toggleMeal, type Meal, type Viewer, type WorkoutExercise } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
 

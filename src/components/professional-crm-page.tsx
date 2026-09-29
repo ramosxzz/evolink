@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertCircle, BellRing, CalendarClock, CheckCircle2, CircleDollarSign, Clock3, Dumbbell, History, MessageSquareText, Pencil, Plus, RefreshCw, Send, Sparkles, Trash2, X } from "lucide-react";
-import { Avatar, Button, PageTitle, Shell } from "@/components/evolink-app";
+import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { deleteCrmReminder, getCrmData, saveCrmReminder, sendCrmReminderNow, toggleCrmReminder, type CrmPlanDeadline, type CrmReminderFrequency, type CrmReminderInput, type CrmReminderKind, type CrmReminderRule, type Viewer } from "@/lib/evolink-data";
 
 const field = "mt-2 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";

@@ -24,7 +24,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { Avatar, Button, PageTitle, Shell } from "@/components/evolink-app";
+import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import {
   applyPlanTemplate,
   createFinanceCharge,

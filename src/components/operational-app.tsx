@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BrandAuth } from "@/components/brand-auth";
-import EvolinkApp, { Button } from "@/components/evolink-app";
+import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
 import { CommunityFeedPage, WorkoutLogbookPage } from "@/components/workout-logbook-page";
 import {
   CardioPage,
   HabitsPage,
-} from "@/components/academy-features";
+} from "@/components/wellness-pages";
 import {
   ProfessionalLibraryPage,
   ProfessionalFinancePage,
@@ -41,6 +41,8 @@ export default function OperationalApp() {
   const [viewer, setViewer] = useState<Viewer | null | undefined>(undefined);
   useEffect(() => {
     window.sessionStorage.removeItem("evolink-demo-role");
+    if ("serviceWorker" in navigator)
+      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, []);
   useEffect(() => {
     getViewer().then(setViewer);
@@ -161,5 +163,22 @@ export default function OperationalApp() {
     pathname === "/profissional/dietas/nova"
   )
     return <LiveProfessionalBuilder viewer={viewer} kind="diet" />;
-  return <EvolinkApp />;
+  return <NotFound viewer={viewer} />;
+}
+
+function NotFound({ viewer }: { viewer: Viewer }) {
+  const router = useRouter();
+  const home = viewer.role === "professional" ? "/profissional" : "/aluno";
+  return (
+    <Shell profile={viewer.role}>
+      <PageTitle
+        kicker="PÁGINA NÃO ENCONTRADA"
+        title="Esse endereço não existe"
+        text="O link pode estar desatualizado ou a página foi movida."
+      />
+      <Button onClick={() => router.replace(home)} className="mt-6">
+        Voltar para o início
+      </Button>
+    </Shell>
+  );
 }
