@@ -150,7 +150,7 @@ as $$
     'structure', round(avg(structure), 1),
     'punctuality', round(avg(punctuality), 1),
     'comments', coalesce(
-      (select jsonb_agg(jsonb_build_object('comment', f.comment, 'created_at', date_trunc('day', f.created_at)) order by f.created_at desc)
+      (select jsonb_agg(jsonb_build_object('comment', f.comment, 'created_on', ((f.created_at at time zone 'America/Sao_Paulo')::date)::text) order by f.created_at desc)
        from public.event_feedback f where f.event_id = target_event and f.comment is not null and length(trim(f.comment)) > 0),
       '[]'::jsonb)
   )

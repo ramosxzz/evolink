@@ -6,6 +6,9 @@ import { BrandAuth } from "@/components/brand-auth";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { ChatPage } from "@/components/chat-page";
 import { EvolutionPage } from "@/components/evolution-page";
+import { EventDetailPage } from "@/components/events/event-detail-page";
+import { EventFormPage } from "@/components/events/event-form-page";
+import { EventsPage } from "@/components/events/events-page";
 import { LegalPage } from "@/components/legal-page";
 import { PlanBuilder } from "@/components/plan-builder";
 import { StudentHomePage } from "@/components/student-home-page";
@@ -142,6 +145,13 @@ export default function OperationalApp() {
   if (pathname === "/aluno/comunidade" || pathname === "/profissional/comunidade")
     return <FeedPage viewer={viewer} />;
   if (pathname === "/conquistas") return <AchievementsPage viewer={viewer} />;
+  if (pathname === "/eventos") return <EventsPage viewer={viewer} />;
+  if (pathname === "/eventos/novo") return <EventFormPage key="novo" viewer={viewer} />;
+  if (pathname.startsWith("/eventos/")) {
+    const [, , eventId, action] = pathname.split("/");
+    if (action === "editar") return <EventFormPage key={`editar-${eventId}`} viewer={viewer} eventId={eventId} />;
+    return <EventDetailPage key={eventId} viewer={viewer} eventId={eventId} />;
+  }
   if (pathname.startsWith("/u/"))
     return <ProfilePage key={pathname} viewer={viewer} profileId={pathname.split("/")[2] === "me" ? viewer.id : pathname.split("/")[2] ?? ""} />;
   if (pathname === "/aluno/check-in") return <LiveCheckin viewer={viewer} />;

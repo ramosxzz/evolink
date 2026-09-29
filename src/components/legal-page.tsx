@@ -18,6 +18,9 @@ const sections: { id: string; title: string; paragraphs: string[] }[] = [
       "Profissionais se comprometem a atuar dentro das normas de seus conselhos (CREF, CRN) e a usar os dados dos alunos apenas para o acompanhamento contratado.",
       "É proibido publicar conteúdo ofensivo, discriminatório, ilegal, que viole direitos de terceiros ou que exponha outras pessoas sem consentimento. Conteúdos que violem estes termos podem ser removidos e a conta suspensa.",
       "Valores, cobranças e prazos combinados entre profissional e aluno são de responsabilidade das partes. O Evolink pode suspender o acesso do aluno quando o profissional assim configurar em caso de inadimplência.",
+      "Eventos são cadastrados por profissionais. Datas, regulamentos e inscrições são responsabilidade da organização de cada evento; confirme sempre com ela.",
+      "Caronas: o Evolink apenas conecta pessoas que vão ao mesmo evento. Não intermediamos pagamentos nem transporte; os combinados, inclusive a divisão de combustível, são de responsabilidade dos participantes.",
+      "Avaliações de eventos são anônimas para o público, mas ficam vinculadas à conta de quem avaliou para evitar abusos. É proibido publicar ofensas, acusações sem fundamento ou dados pessoais de terceiros; avaliações assim podem ser removidas e a conta suspensa.",
       "Podemos atualizar estes termos. Mudanças relevantes serão comunicadas no aplicativo antes de entrarem em vigor.",
     ],
   },
@@ -63,7 +66,7 @@ export function LegalPage() {
             </ol>
           </section>
         ))}
-        <p className="mt-8 text-sm text-[#5f746d]">Dúvidas ou solicitações sobre seus dados: <a href="mailto:contato@solairew.com.br" className="font-bold text-[#07845a]">contato@solairew.com.br</a></p>
+        <p className="mt-8 text-sm text-[#5f746d]">Dúvidas ou solicitações sobre seus dados: <a href="mailto:admin@solairew.com.br" className="font-bold text-[#07845a]">admin@solairew.com.br</a></p>
       </article>
     </main>
   );
