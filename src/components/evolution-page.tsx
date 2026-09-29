@@ -17,20 +17,28 @@ const kg = (value: number) => `${value.toFixed(1).replace(".", ",")} kg`;
 const shortDate = (date: string) => new Date(`${date}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 
 export function EvolutionPage({ viewer }: { viewer: Viewer }) {
+  const [version, setVersion] = useState(0);
+  return (
+    <Shell profile="student">
+      <PageTitle kicker="EVOLUÇÃO" title="Acompanhe seu progresso" text="Peso, medidas e fotos privadas, só você e seu profissional veem." />
+      <ProgressOverview
+        key={version}
+        studentId={viewer.id}
+        target={viewer.student?.targetWeightKg ?? null}
+        aside={<RecordForm viewer={viewer} onSaved={() => setVersion(value => value + 1)} />}
+      />
+    </Shell>
+  );
+}
+
+/** Stats, weight chart and history with photos. Read-only; used by the student and the coach. */
+export function ProgressOverview({ studentId, target, aside }: { studentId: string; target: number | null; aside?: React.ReactNode }) {
   const [records, setRecords] = useState<ProgressRecord[] | null>(null);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
-  const target = viewer.student?.targetWeightKg ?? null;
-
-  async function load() {
-    const rows = await getProgress(viewer.id);
-    setRecords(rows);
-    const paths = rows.flatMap(row => ((row.progress_photos ?? []) as Photo[]).map(photo => photo.storage_path));
-    setPhotoUrls(await getProgressPhotoUrls(paths));
-  }
 
   useEffect(() => {
     let active = true;
-    getProgress(viewer.id).then(async rows => {
+    getProgress(studentId).then(async rows => {
       if (!active) return;
       setRecords(rows);
       const paths = rows.flatMap(row => ((row.progress_photos ?? []) as Photo[]).map(photo => photo.storage_path));
@@ -38,7 +46,7 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
       if (active) setPhotoUrls(urls);
     });
     return () => { active = false; };
-  }, [viewer.id]);
+  }, [studentId]);
 
   const chart = useMemo(
     () => [...(records ?? [])].reverse().filter(row => row.weight_kg !== null).map(row => ({ date: shortDate(row.recorded_on), weight: Number(row.weight_kg) })),
@@ -50,9 +58,7 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
   const remaining = current !== undefined && target ? current - Number(target) : null;
 
   return (
-    <Shell profile="student">
-      <PageTitle kicker="EVOLUÇÃO" title="Acompanhe seu progresso" text="Peso, medidas e fotos privadas, só você e seu profissional veem." />
-
+    <>
       <div className="mt-7 grid gap-4 sm:grid-cols-3">
         <Reveal index={0}>
           <Stat icon={Scale} label="PESO ATUAL" value={current} format={kg} empty="Sem registro" />
@@ -72,18 +78,18 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
             label={target ? `META ${kg(Number(target))}` : "META"}
             value={remaining !== null ? Math.abs(remaining) : undefined}
             format={value => (remaining !== null && Math.abs(remaining) < 0.05 ? "Meta atingida" : `faltam ${kg(value)}`)}
-            empty="Defina no perfil"
+            empty="Não definida"
           />
         </Reveal>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+      <div className={`mt-4 grid gap-4 ${aside ? "xl:grid-cols-[1.4fr_1fr]" : ""}`}>
         <Reveal index={3} className={card}>
           <h2 className="font-bold">Peso ao longo do tempo</h2>
           {records === null ? (
             <div className="mt-4 h-64 animate-pulse rounded-2xl bg-[#f3f8f5]" />
           ) : chart.length < 2 ? (
-            <p className="mt-4 grid h-64 place-items-center rounded-2xl bg-[#f7faf8] text-sm text-[#71837b]">Registre pelo menos duas pesagens para ver o gráfico.</p>
+            <p className="mt-4 grid h-64 place-items-center rounded-2xl bg-[#f7faf8] text-sm text-[#71837b]">São necessárias pelo menos duas pesagens para o gráfico.</p>
           ) : (
             <div className="mt-4 h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -105,10 +111,7 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
             </div>
           )}
         </Reveal>
-
-        <Reveal index={4}>
-          <RecordForm viewer={viewer} onSaved={load} />
-        </Reveal>
+        {aside && <Reveal index={4}>{aside}</Reveal>}
       </div>
 
       <Reveal index={5} className={`${card} mt-4`}>
@@ -116,7 +119,7 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
         {records === null ? (
           <p className="mt-4 text-sm text-[#71837b]">Carregando registros...</p>
         ) : records.length === 0 ? (
-          <p className="mt-4 text-sm text-[#71837b]">Seu primeiro registro aparecerá aqui.</p>
+          <p className="mt-4 text-sm text-[#71837b]">Nenhum registro ainda.</p>
         ) : (
           <div className="mt-4 divide-y divide-[#edf2ef]">
             {records.map((record, index) => {
@@ -134,6 +137,7 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
                           {change > 0 ? "+" : ""}{change.toFixed(1).replace(".", ",")}
                         </span>
                       )}
+                      {record.waist_cm && <span className="ml-2 text-xs font-semibold text-[#71837b]">cintura {String(record.waist_cm).replace(".", ",")} cm</span>}
                     </p>
                     {record.note && <p className="truncate text-sm text-[#52665e]">{record.note}</p>}
                   </div>
@@ -153,7 +157,7 @@ export function EvolutionPage({ viewer }: { viewer: Viewer }) {
           </div>
         )}
       </Reveal>
-    </Shell>
+    </>
   );
 }
 
