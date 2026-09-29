@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertCircle, BellRing, CalendarClock, CheckCircle2, CircleDollarSign, Clock3, Dumbbell, History, MessageSquareText, Pencil, Plus, RefreshCw, Send, Sparkles, Trash2, X } from "lucide-react";
 import { Avatar, Button, PageTitle, Shell } from "@/components/app-shell";
 import { deleteCrmReminder, getCrmData, saveCrmReminder, sendCrmReminderNow, toggleCrmReminder, type CrmPlanDeadline, type CrmReminderFrequency, type CrmReminderInput, type CrmReminderKind, type CrmReminderRule, type Viewer } from "@/lib/evolink-data";
+import { addDays, localDate } from "@/lib/dates";
 
 const field = "mt-2 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
 const kinds: { value: CrmReminderKind; label: string; icon: typeof BellRing; title: string; message: string; frequency: CrmReminderFrequency }[] = [
@@ -18,7 +19,7 @@ const kinds: { value: CrmReminderKind; label: string; icon: typeof BellRing; tit
 ];
 const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
-function tomorrow() { const value = new Date(); value.setDate(value.getDate() + 1); return value.toISOString().slice(0, 10); }
+function tomorrow() { return localDate(addDays(1)); }
 function defaultForm(studentId = ""): CrmReminderInput { const template = kinds[0]; return { studentId, kind: template.value, title: template.title, message: template.message, frequency: template.frequency, targetDate: tomorrow(), weekday: 1, dayOfMonth: 10, sendTime: "09:00", active: true }; }
 function toForm(rule: CrmReminderRule): CrmReminderInput { return { studentId: rule.student_id, kind: rule.kind, title: rule.title, message: rule.message, frequency: rule.frequency, targetDate: rule.target_date ?? tomorrow(), weekday: rule.weekday ?? 1, dayOfMonth: rule.day_of_month ?? 10, sendTime: rule.send_time.slice(0, 5), active: rule.active, relatedEntityType: rule.related_entity_type, relatedEntityId: rule.related_entity_id }; }
 function kindInfo(kind: CrmReminderKind) { return kinds.find(item => item.value === kind) ?? kinds[5]; }

@@ -48,6 +48,7 @@ import {
   type Viewer,
   type WorkoutTemplateContent,
 } from "@/lib/evolink-data";
+import { localDate } from "@/lib/dates";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white soft-shadow";
 const field = "mt-2 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm outline-none transition placeholder:text-[#9aaba3] focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -431,7 +432,7 @@ export function ProfessionalFinancePage({ viewer }: { viewer: Viewer }) {
   const [students, setStudents] = useState<Awaited<ReturnType<typeof getProfessionalStudents>>>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "overdue" | "paid">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ studentId: "", amount: "249,90", dueDate: new Date().toISOString().slice(0, 10), autoSuspend: true, graceDays: 3 });
+  const [form, setForm] = useState({ studentId: "", amount: "249,90", dueDate: localDate(), autoSuspend: true, graceDays: 3 });
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");

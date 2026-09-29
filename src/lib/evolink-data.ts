@@ -1,5 +1,6 @@
 "use client";
 
+import { localDate, startOfTodayIso, weekStart } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/client";
 
 export type Viewer = {
@@ -32,7 +33,7 @@ export type WorkoutExercise = {
   media_id: string | null;
 };
 
-function today() { return new Date().toISOString().slice(0, 10); }
+const today = () => localDate();
 
 // Shell, notifications and the router all ask for the viewer on every page;
 // share one lookup per signed-in user instead of repeating ~5 requests each.
@@ -107,7 +108,7 @@ export async function getStudentWorkout(studentId: string) {
   const { data: plan } = await supabase.from("workout_plans").select("id, title, objective, estimated_minutes, workout_exercises(id, name, sets, repetitions, rest_seconds, suggested_load, notes, video_url, media_id, position)").eq("student_id", studentId).eq("status", "published").order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (!plan) return { plan: null, exercises: [] as WorkoutExercise[], completedExerciseIds: new Set<string>() };
   const exerciseIds = (plan.workout_exercises ?? []).map(exercise => exercise.id);
-  const { data: logs } = exerciseIds.length ? await supabase.from("workout_exercise_logs").select("workout_exercise_id").eq("student_id", studentId).gte("completed_at", `${today()}T00:00:00.000Z`) : { data: [] };
+  const { data: logs } = exerciseIds.length ? await supabase.from("workout_exercise_logs").select("workout_exercise_id").eq("student_id", studentId).gte("completed_at", startOfTodayIso()) : { data: [] };
   return { plan, exercises: [...(plan.workout_exercises ?? [])].sort((a, b) => a.position - b.position) as WorkoutExercise[], completedExerciseIds: new Set((logs ?? []).map(log => log.workout_exercise_id)) };
 }
 
@@ -116,7 +117,7 @@ export async function logExercise(studentId: string, exerciseId: string, loadVal
 }
 
 export async function getWaterToday(studentId: string) {
-  const { data } = await createClient().from("water_logs").select("amount_ml").eq("student_id", studentId).gte("logged_at", `${today()}T00:00:00.000Z`);
+  const { data } = await createClient().from("water_logs").select("amount_ml").eq("student_id", studentId).gte("logged_at", startOfTodayIso());
   return (data ?? []).reduce((total, entry) => total + entry.amount_ml, 0);
 }
 
@@ -147,8 +148,7 @@ export async function markNotificationsRead(viewerId: string) {
 
 export async function saveCheckin(viewer: Viewer, values: { nutrition: number; trainingDays: number; energy: number; weight?: number; message?: string }) {
   if (!viewer.studentId || !viewer.counterpart) return { error: new Error("Vincule um profissional antes de enviar o check-in.") };
-  const date = new Date(); const monday = new Date(date); monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
-  return createClient().from("check_ins").upsert({ student_id: viewer.studentId, professional_id: viewer.counterpart.id, week_of: monday.toISOString().slice(0, 10), nutrition_score: values.nutrition, training_days: values.trainingDays, energy_score: values.energy, current_weight_kg: values.weight ?? null, student_message: values.message ?? null, status: "submitted", submitted_at: new Date().toISOString() }, { onConflict: "student_id,week_of" });
+  return createClient().from("check_ins").upsert({ student_id: viewer.studentId, professional_id: viewer.counterpart.id, week_of: weekStart(), nutrition_score: values.nutrition, training_days: values.trainingDays, energy_score: values.energy, current_weight_kg: values.weight ?? null, student_message: values.message ?? null, status: "submitted", submitted_at: new Date().toISOString() }, { onConflict: "student_id,week_of" });
 }
 
 export async function getProfessionalStudents(professionalId: string) {
