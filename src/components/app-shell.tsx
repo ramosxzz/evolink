@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { BadgeCheck,
+import { BadgeCheck, BriefcaseBusiness, UserSearch,
   Apple, Bell, BellRing, BookOpen, CalendarDays, ChevronRight, CircleDollarSign, ClipboardCheck, Dumbbell, Globe2, HeartPulse, Home, LayoutDashboard,
   Flag, LayoutGrid, Library, LogOut, Medal, MessageCircle, Plus, Settings, Target, TrendingUp, Trophy, UserRound, Users,
 } from "lucide-react";
@@ -36,6 +36,7 @@ const studentNav: NavGroup[] = [
     { label: "Feed", href: "/aluno/comunidade", icon: Globe2 },
     { label: "Eventos", href: "/eventos", icon: CalendarDays },
     { label: "Ranking", href: "/ranking", icon: Medal },
+    { label: "Treinadores", href: "/treinadores", icon: UserSearch },
     { label: "Chat", href: "/aluno/chat", icon: MessageCircle },
   ] },
 ];
@@ -57,6 +58,7 @@ const professionalNav: NavGroup[] = [
   { title: "Negócio", items: [
     { label: "Financeiro", href: "/profissional/financeiro", icon: CircleDollarSign },
     { label: "CRM e lembretes", href: "/profissional/crm", icon: BellRing },
+    { label: "Portfólio", href: "/profissional/portfolio", icon: BriefcaseBusiness },
     { label: "Assinatura", href: "/profissional/assinatura", icon: BadgeCheck },
   ] },
   { title: "Comunidade", items: [
@@ -85,7 +87,7 @@ export function AppFrame({ profile, children }: { profile: Profile; children: Re
   const allItems = groups.flatMap(group => group.items);
   const current = allItems.find(item => isActive(path, item.href));
   // Pages reached from the user menu or links, which are not in the sidebar.
-  const extraTitles: [string, string][] = [["/aluno/perfil", "Conta"], ["/profissional/configuracoes", "Configurações"], ["/u/", "Perfil"], ["/aluno/check-in", "Check-in"], ["/profissional/treinos", "Treinos"], ["/profissional/dietas", "Dietas"]];
+  const extraTitles: [string, string][] = [["/aluno/perfil", "Conta"], ["/profissional/configuracoes", "Configurações"], ["/u/", "Perfil"], ["/aluno/check-in", "Check-in"], ["/profissional/treinos", "Treinos"], ["/profissional/dietas", "Dietas"], ["/treinadores/", "Treinador"]];
   const title = current?.label ?? extraTitles.find(([prefix]) => path.startsWith(prefix))?.[1] ?? "";
 
   useEffect(() => {

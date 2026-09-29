@@ -42,6 +42,9 @@ import {
 import { coachAccess, getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
 import { BillingPage } from "@/components/billing-page";
+import { CoachDirectory } from "@/components/portfolio/coach-directory";
+import { CoachPage } from "@/components/portfolio/coach-page";
+import { PortfolioEditor } from "@/components/portfolio/portfolio-editor";
 import { isLockedPath, SubscriptionBanner, SubscriptionLocked } from "@/components/subscription-gate";
 
 const publicPaths = ["/", "/login", "/cadastro", "/recuperar-senha", "/redefinir-senha"] as const;
@@ -187,6 +190,10 @@ function RouteContent({ pathname, viewer, inviteToken }: { pathname: string; vie
     return <LiveProfessionalDashboard viewer={viewer} />;
   if (pathname === "/profissional/financeiro")
     return <ProfessionalFinancePage viewer={viewer} />;
+  if (pathname === "/treinadores") return <CoachDirectory viewer={viewer} />;
+  if (pathname.startsWith("/treinadores/"))
+    return <CoachPage key={pathname} viewer={viewer} coachId={pathname.split("/")[2] ?? ""} />;
+  if (pathname === "/profissional/portfolio") return <PortfolioEditor viewer={viewer} />;
   if (pathname === "/profissional/assinatura")
     return <BillingPage viewer={viewer} />;
   if (pathname === "/profissional/crm")

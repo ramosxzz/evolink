@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "motion/react";
-import { ArrowLeft, Camera, Check, Lock, MessageCircle, Pencil, Trophy, UserCheck, UserPlus } from "lucide-react";
+import { BriefcaseBusiness, ArrowLeft, Camera, Check, Lock, MessageCircle, Pencil, Trophy, UserCheck, UserPlus } from "lucide-react";
 import { Button, Shell } from "@/components/app-shell";
 import { Medal3D } from "@/components/social/medal-3d";
 import { FramedAvatar } from "@/components/social/framed-avatar";
@@ -76,6 +76,7 @@ export function ProfilePage({ viewer, profileId }: { viewer: Viewer; profileId: 
             <div className="-mt-12 flex items-end justify-between gap-3">
               <FramedAvatar author={profile.author} size="xl" />
               <div className="flex gap-2 pb-1">
+                {profile.role === "professional" && <Button kind="soft" onClick={() => router.push(`/treinadores/${profileId}`)} className="px-4 py-2 text-sm"><BriefcaseBusiness size={15} />Portfólio</Button>}
                 {own ? (
                   <Button kind="outline" onClick={() => setEditing(true)} className="px-4 py-2 text-sm"><Pencil size={15} />Editar perfil</Button>
                 ) : (
