@@ -466,23 +466,41 @@ export async function redeemProfessionalInvite(token: string) {
   return { error: response.ok ? null : new Error(body.error ?? "Não foi possível aceitar o convite.") };
 }
 
-export async function publishWorkout(professionalId: string, studentId: string, values: { title: string; objective: string; minutes: number; endsOn?: string; exercises: { name: string; sets: number; repetitions: string; restSeconds: number; videoUrl?: string }[] }) {
+export async function getStudentPlans(professionalId: string, studentId: string) {
+  const supabase = createClient();
+  const [workouts, diets] = await Promise.all([
+    supabase.from("workout_plans").select("id, title, updated_at, ends_on, workout_exercises(id)").eq("professional_id", professionalId).eq("student_id", studentId).eq("status", "published").order("title"),
+    supabase.from("diet_plans").select("id, title, updated_at, ends_on").eq("professional_id", professionalId).eq("student_id", studentId).eq("status", "published").order("created_at", { ascending: false }),
+  ]);
+  return { workouts: workouts.data ?? [], diets: diets.data ?? [], error: workouts.error ?? diets.error };
+}
+
+export async function archiveWorkoutPlan(planId: string) {
+  return createClient().from("workout_plans").update({ status: "archived" }).eq("id", planId);
+}
+
+export type PublishExercise = { name: string; sets: number; repetitions: string; restSeconds: number; videoUrl?: string; load?: string; notes?: string; muscleGroup?: string };
+export type PublishMealItem = string | { description: string; quantity?: number | null; unit?: string; substitutions?: string[] };
+
+export async function publishWorkout(professionalId: string, studentId: string, values: { title: string; objective: string; minutes: number; endsOn?: string; exercises: PublishExercise[] }) {
   const supabase = createClient();
   const { data: plan, error } = await supabase.from("workout_plans").insert({ professional_id: professionalId, student_id: studentId, title: values.title, objective: values.objective || null, estimated_minutes: values.minutes || null, status: "published", starts_on: today(), ends_on: values.endsOn || null }).select("id").single();
   if (error || !plan) return { error: error ?? new Error("Não foi possível criar o treino.") };
-  const { error: exerciseError } = await supabase.from("workout_exercises").insert(values.exercises.map((exercise, position) => ({ workout_plan_id: plan.id, name: exercise.name, sets: exercise.sets, repetitions: exercise.repetitions, rest_seconds: exercise.restSeconds, video_url: exercise.videoUrl || null, position })));
+  const { error: exerciseError } = await supabase.from("workout_exercises").insert(values.exercises.map((exercise, position) => ({ workout_plan_id: plan.id, name: exercise.name, sets: exercise.sets, repetitions: exercise.repetitions, rest_seconds: exercise.restSeconds, video_url: exercise.videoUrl || null, suggested_load: exercise.load || null, notes: exercise.notes || null, muscle_group: exercise.muscleGroup || null, position })));
   return { error: exerciseError };
 }
 
-export async function publishDiet(professionalId: string, studentId: string, values: { title: string; notes: string; endsOn?: string; meals: { name: string; time: string; items: string[] }[] }) {
+/** Publishes a diet and archives the student's previous one (students follow a single diet). */
+export async function publishDiet(professionalId: string, studentId: string, values: { title: string; notes: string; endsOn?: string; meals: { name: string; time: string; items: PublishMealItem[] }[] }) {
   const supabase = createClient();
   const { data: plan, error } = await supabase.from("diet_plans").insert({ professional_id: professionalId, student_id: studentId, title: values.title, notes: values.notes || null, status: "published", starts_on: today(), ends_on: values.endsOn || null }).select("id").single();
   if (error || !plan) return { error: error ?? new Error("Não foi possível criar a dieta.") };
   for (const [position, meal] of values.meals.entries()) {
     const { data: createdMeal, error: mealError } = await supabase.from("meals").insert({ diet_plan_id: plan.id, name: meal.name, scheduled_time: meal.time || null, position }).select("id").single();
     if (mealError || !createdMeal) return { error: mealError ?? new Error("Não foi possível criar uma refeição.") };
-    if (meal.items.length) { const { error: itemsError } = await supabase.from("meal_items").insert(meal.items.map((description, itemPosition) => ({ meal_id: createdMeal.id, description, position: itemPosition }))); if (itemsError) return { error: itemsError }; }
+    if (meal.items.length) { const { error: itemsError } = await supabase.from("meal_items").insert(meal.items.map((item, itemPosition) => typeof item === "string" ? { meal_id: createdMeal.id, description: item, position: itemPosition } : { meal_id: createdMeal.id, description: item.description, quantity: item.quantity ?? null, unit: item.unit || null, substitutions: item.substitutions ?? [], position: itemPosition })); if (itemsError) return { error: itemsError }; }
   }
+  await supabase.from("diet_plans").update({ status: "archived" }).eq("professional_id", professionalId).eq("student_id", studentId).eq("status", "published").neq("id", plan.id);
   return { error: null };
 }
 

@@ -7,6 +7,7 @@ import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { ChatPage } from "@/components/chat-page";
 import { EvolutionPage } from "@/components/evolution-page";
 import { LegalPage } from "@/components/legal-page";
+import { PlanBuilder } from "@/components/plan-builder";
 import { StudentHomePage } from "@/components/student-home-page";
 import { StudentProfilePage } from "@/components/student-profile-page";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
@@ -24,7 +25,6 @@ import {
 import {
   LiveCheckin,
   LiveDiet,
-  LiveProfessionalBuilder,
   LiveProfessionalCheckins,
   LiveProfessionalDashboard,
   LiveProfessionalStudentPage,
@@ -175,12 +175,12 @@ export default function OperationalApp() {
     pathname === "/profissional/treinos" ||
     pathname === "/profissional/treinos/novo"
   )
-    return <LiveProfessionalBuilder viewer={viewer} kind="workout" />;
+    return <PlanBuilder key="workout" viewer={viewer} kind="workout" />;
   if (
     pathname === "/profissional/dietas" ||
     pathname === "/profissional/dietas/nova"
   )
-    return <LiveProfessionalBuilder viewer={viewer} kind="diet" />;
+    return <PlanBuilder key="diet" viewer={viewer} kind="diet" />;
   return <NotFound viewer={viewer} />;
 }
 
