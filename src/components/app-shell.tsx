@@ -80,6 +80,9 @@ export function AppFrame({ profile, children }: { profile: Profile; children: Re
   const tabs = profile === "student" ? studentTabs : professionalTabs;
   const allItems = groups.flatMap(group => group.items);
   const current = allItems.find(item => isActive(path, item.href));
+  // Pages reached from the user menu or links, which are not in the sidebar.
+  const extraTitles: [string, string][] = [["/aluno/perfil", "Conta"], ["/profissional/configuracoes", "Configurações"], ["/u/", "Perfil"], ["/aluno/check-in", "Check-in"], ["/profissional/treinos", "Treinos"], ["/profissional/dietas", "Dietas"]];
+  const title = current?.label ?? extraTitles.find(([prefix]) => path.startsWith(prefix))?.[1] ?? "";
 
   useEffect(() => {
     let active = true;
@@ -140,7 +143,7 @@ export function AppFrame({ profile, children }: { profile: Profile; children: Re
           <button onClick={() => go(profile === "student" ? "/aluno" : "/profissional")} className="flex items-center gap-2 lg:hidden" aria-label="Início">
             <Mark />
           </button>
-          <p className="truncate text-sm font-semibold text-[var(--ink)] lg:text-base">{current?.label ?? ""}</p>
+          <p className="truncate text-sm font-semibold text-[var(--ink)] lg:text-base">{title}</p>
           <div className="ml-auto flex items-center gap-1">
             <NotificationButton />
             <div className="lg:hidden"><UserMenu profile={profile} name={viewer?.name ?? ""} onNavigate={go} onSignOut={signOut} compact /></div>

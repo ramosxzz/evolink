@@ -7,6 +7,7 @@ import { AppFrame, Button, PageTitle, Shell } from "@/components/app-shell";
 import { PageSkeleton, Skeleton } from "@/components/ui/skeleton";
 import { ChatPage } from "@/components/chat-page";
 import { CheckinPage } from "@/components/checkin-page";
+import { CoachCheckinsPage } from "@/components/coach-checkins-page";
 import { DietPage } from "@/components/diet-page";
 import { EvolutionPage } from "@/components/evolution-page";
 import { EventDetailPage } from "@/components/events/event-detail-page";
@@ -33,7 +34,6 @@ import {
   ProfessionalTemplatesPage,
 } from "@/components/professional-pages";
 import {
-  LiveProfessionalCheckins,
   LiveProfessionalDashboard,
   LiveProfessionalStudentPage,
 } from "@/components/operational-pages";
@@ -187,7 +187,7 @@ function RouteContent({ pathname, viewer, inviteToken }: { pathname: string; vie
   if (pathname === "/profissional/configuracoes")
     return <ProfessionalSettingsPage viewer={viewer} />;
   if (pathname === "/profissional/check-ins")
-    return <LiveProfessionalCheckins viewer={viewer} />;
+    return <CoachCheckinsPage viewer={viewer} />;
   if (pathname === "/profissional/alunos")
     return <StudentsPage viewer={viewer} />;
   if (pathname.startsWith("/profissional/alunos/"))

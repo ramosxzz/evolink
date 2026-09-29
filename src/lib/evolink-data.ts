@@ -285,7 +285,7 @@ export async function getProfessionalStudentDetail(professionalId: string, stude
     supabase.from("profiles").select("id, full_name, phone, updated_at").eq("id", studentId).single(),
     supabase.from("student_profiles").select("id, goal, started_at, initial_weight_kg, target_weight_kg, daily_water_goal_ml, access_status, suspension_reason").eq("id", studentId).single(),
     supabase.from("diet_plans").select("id, title, status, updated_at, meals(id)").eq("professional_id", professionalId).eq("student_id", studentId).order("updated_at", { ascending: false }).limit(1),
-    supabase.from("workout_plans").select("id, title, objective, status, updated_at, workout_exercises(id)").eq("professional_id", professionalId).eq("student_id", studentId).order("updated_at", { ascending: false }).limit(1),
+    supabase.from("workout_plans").select("id, title, objective, status, updated_at, workout_exercises(id)").eq("professional_id", professionalId).eq("student_id", studentId).eq("status", "published").order("title").limit(12),
     supabase.from("cardio_plans").select("id, title, modality, duration_minutes, sessions_per_week, intensity, status, updated_at").eq("professional_id", professionalId).eq("student_id", studentId).order("updated_at", { ascending: false }).limit(1),
     supabase.from("check_ins").select("id, week_of, status, nutrition_score, training_days, energy_score, current_weight_kg, student_message, professional_feedback, submitted_at").eq("professional_id", professionalId).eq("student_id", studentId).order("week_of", { ascending: false }).limit(12),
     supabase.from("progress_records").select("id, recorded_on, weight_kg, note, progress_photos(id, storage_path, angle)").eq("student_id", studentId).order("recorded_on", { ascending: false }).limit(20),
@@ -295,7 +295,7 @@ export async function getProfessionalStudentDetail(professionalId: string, stude
   ]);
   const error = profile.error ?? student.error ?? diets.error ?? workouts.error ?? cardio.error ?? checkins.error ?? progress.error ?? notes.error ?? subscriptions.error ?? workoutHistory.error;
   if (error) return { data: null, error };
-  return { data: { relation, profile: profile.data, student: student.data, diet: diets.data?.[0] ?? null, workout: workouts.data?.[0] ?? null, cardio: cardio.data?.[0] ?? null, checkins: checkins.data ?? [], progress: progress.data ?? [], notes: notes.data ?? [], subscription: subscriptions.data?.[0] ?? null, workoutHistory: workoutHistory.data ?? [] }, error: null };
+  return { data: { relation, profile: profile.data, student: student.data, diet: diets.data?.[0] ?? null, workout: workouts.data?.[0] ?? null, workouts: workouts.data ?? [], cardio: cardio.data?.[0] ?? null, checkins: checkins.data ?? [], progress: progress.data ?? [], notes: notes.data ?? [], subscription: subscriptions.data?.[0] ?? null, workoutHistory: workoutHistory.data ?? [] }, error: null };
 }
 
 export async function addStudentNote(professionalId: string, studentId: string, body: string, isPrivate: boolean) {
@@ -445,7 +445,7 @@ export async function sendCrmReminderNow(rule: CrmReminderRule) {
 }
 
 export async function getProfessionalCheckins(professionalId: string) {
-  const { data } = await createClient().from("check_ins").select("id, student_id, status, nutrition_score, training_days, energy_score, current_weight_kg, student_message, professional_feedback, submitted_at, student_profiles(profiles(full_name))").eq("professional_id", professionalId).in("status", ["submitted", "reviewed"]).order("submitted_at", { ascending: false }).limit(50);
+  const { data } = await createClient().from("check_ins").select("id, student_id, status, week_of, nutrition_score, training_days, energy_score, sleep_score, stress_score, current_weight_kg, difficulties, student_message, professional_feedback, submitted_at, reviewed_at, student_profiles(profiles(full_name))").eq("professional_id", professionalId).in("status", ["submitted", "reviewed"]).order("submitted_at", { ascending: false }).limit(50);
   return (data ?? []).map(({ student_profiles, ...row }) => ({ ...row, profiles: (student_profiles as unknown as { profiles: { full_name: string } | null } | null)?.profiles ?? null }));
 }
 
