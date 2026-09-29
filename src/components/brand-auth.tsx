@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowRight, CheckCircle2, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle, ArrowRight, CheckCircle2, Gift, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
 import { Spinner } from "@/components/app-shell";
@@ -16,7 +16,9 @@ export function BrandAuth({ path }: { path: AuthPath }) {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
-  const [accountRole, setAccountRole] = useState<"student" | "professional">("student");
+  // Coach referral link: /cadastro?ref=CODE starts as a professional signup.
+  const referralCode = useSearchParams().get("ref")?.trim().toUpperCase().slice(0, 12) || null;
+  const [accountRole, setAccountRole] = useState<"student" | "professional">(referralCode ? "professional" : "student");
   const signup = path === "/cadastro";
   const recovery = path === "/recuperar-senha";
   const reset = path === "/redefinir-senha";
@@ -52,7 +54,7 @@ export function BrandAuth({ path }: { path: AuthPath }) {
       if (signup) {
         if (fullName.length < 2) throw new Error("Informe seu nome completo.");
         if (password.length < 8) throw new Error("A senha precisa ter pelo menos 8 caracteres.");
-        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, role: accountRole }, emailRedirectTo: `${window.location.origin}/login` } });
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, role: accountRole, ...(referralCode && accountRole === "professional" ? { referral_code: referralCode } : {}) }, emailRedirectTo: `${window.location.origin}/login` } });
         if (error) throw error;
         if (data.session) {
           router.replace(accountRole === "professional" ? "/profissional" : "/aluno");
@@ -101,6 +103,7 @@ export function BrandAuth({ path }: { path: AuthPath }) {
         <motion.h2 {...reveal} transition={{ delay: reduceMotion ? 0 : .05, duration: .48, ease }} className="mt-2 text-3xl font-bold tracking-tight">{reset ? "Defina sua nova senha." : recovery ? "Vamos te ajudar a entrar." : signup ? "Crie sua conta." : "Entre no seu ritmo."}</motion.h2>
         <p className="mt-3 text-sm leading-relaxed text-[#5f746d]">{reset ? "Escolha uma senha com pelo menos 8 caracteres." : recovery ? "Digite seu e-mail e enviaremos um link seguro." : signup ? "Seu primeiro passo para uma evolução sustentável." : "Acompanhe sua rotina e mantenha o foco no que importa."}</p>
         <form action={submit} className="mt-8 space-y-4">
+          {signup && referralCode && accountRole === "professional" && <div className="flex items-start gap-3 rounded-xl border border-[#bfe3cf] bg-[#e8f8ed] p-3 text-sm text-[#076841]"><Gift size={18} className="mt-0.5 shrink-0" /><span><strong>Você foi indicado.</strong> Ganha 30 dias grátis para testar o Evolink com seus alunos.</span></div>}
           {signup && <><Input name="fullName" label="Nome completo" placeholder="Como podemos te chamar?" icon={UserRound} /><div><p className="mb-2 text-sm font-bold">Como você vai usar o Evolink?</p><div className="grid grid-cols-2 gap-3"><button type="button" onClick={() => setAccountRole("student")} className={`rounded-xl border p-3 text-left text-sm font-bold ${accountRole === "student" ? "border-[#07845a] bg-[#e8f8ed] text-[#076841]" : "border-[#d6e4dc] bg-white text-[#5f746d]"}`}>Sou aluno</button><button type="button" onClick={() => setAccountRole("professional")} className={`rounded-xl border p-3 text-left text-sm font-bold ${accountRole === "professional" ? "border-[#07845a] bg-[#e8f8ed] text-[#076841]" : "border-[#d6e4dc] bg-white text-[#5f746d]"}`}>Sou profissional</button></div></div></>}
           {!reset && <Input name="email" label="E-mail" placeholder="voce@email.com" type="email" icon={Mail} />}
           {!recovery && <Input name="password" label={reset ? "Nova senha" : "Senha"} placeholder="Mínimo de 8 caracteres" type="password" icon={LockKeyhole} minLength={8} autoComplete={signup || reset ? "new-password" : "current-password"} />}

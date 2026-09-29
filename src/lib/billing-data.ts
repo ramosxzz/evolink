@@ -36,3 +36,17 @@ async function api(path: string, init: RequestInit = {}) {
 export const startCheckout = (planId: string) => api("/api/billing/checkout", { method: "POST", body: JSON.stringify({ planId }) });
 export const getInvoiceStatus = (invoiceId: string) => api(`/api/billing/invoices/${invoiceId}`);
 export const simulatePayment = (invoiceId: string) => api(`/api/billing/invoices/${invoiceId}/simulate`, { method: "POST" });
+
+export type Referral = { referredId: string; name: string; createdAt: string; rewardedAt: string | null };
+
+export async function getReferrals(coachId: string) {
+  const supabase = createClient();
+  const [code, referrals] = await Promise.all([
+    supabase.rpc("my_referral_code"),
+    supabase.from("coach_referrals").select("referred_id, referred_name, created_at, rewarded_at").eq("referrer_id", coachId).order("created_at", { ascending: false }),
+  ]);
+  return {
+    code: (code.data as string | null) ?? null,
+    referrals: (referrals.data ?? []).map(row => ({ referredId: row.referred_id, name: row.referred_name, createdAt: row.created_at, rewardedAt: row.rewarded_at })) as Referral[],
+  };
+}

@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, CheckCircle2, Clock3, Copy, QrCode, ReceiptText, ShieldCheck, Sparkles } from "lucide-react";
+import { Check, CheckCircle2, Clock3, Copy, Gift, QrCode, ReceiptText, Share2, ShieldCheck, Sparkles } from "lucide-react";
 import QRCode from "qrcode";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { Modal } from "@/components/ui/modal";
 import { ProgressBar, Reveal } from "@/components/ui/motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GRACE_DAYS, refreshViewer, type Viewer } from "@/lib/evolink-data";
-import { getBillingOverview, getInvoiceStatus, money, simulatePayment, startCheckout, TRIAL_DAYS, type Invoice, type PlatformPlan } from "@/lib/billing-data";
+import { getBillingOverview, getInvoiceStatus, getReferrals, money, simulatePayment, startCheckout, TRIAL_DAYS, type Invoice, type PlatformPlan, type Referral } from "@/lib/billing-data";
 
 type Overview = Awaited<ReturnType<typeof getBillingOverview>>;
 
@@ -133,6 +133,8 @@ export function BillingPage({ viewer }: { viewer: Viewer }) {
           </div>
 
           <p className="mt-4 flex items-center gap-2 text-xs text-[var(--muted)]"><ShieldCheck size={14} className="text-[var(--emerald)]" /> Cobrança emitida pelo Banco Inter. Sem cartão e sem renovação automática: você paga quando quiser renovar.</p>
+
+          <ReferralSection coachId={coachId} />
 
           <section className="mt-8">
             <h2 className="flex items-center gap-2 font-bold"><ReceiptText size={18} className="text-[var(--emerald)]" /> Histórico</h2>
@@ -283,3 +285,73 @@ function PixModal({ invoice, planName, onClose, onPaid }: { invoice: Invoice | n
   );
 }
 
+
+function ReferralSection({ coachId }: { coachId: string }) {
+  const [data, setData] = useState<{ code: string | null; referrals: Referral[] } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getReferrals(coachId).then(result => { if (active) setData(result); });
+    return () => { active = false; };
+  }, [coachId]);
+
+  const link = data?.code ? `https://evolink.solairew.com.br/cadastro?ref=${data.code}` : "";
+  const rewarded = data?.referrals.filter(item => item.rewardedAt).length ?? 0;
+
+  async function share() {
+    const text = "Uso o Evolink para acompanhar meus alunos (treino, dieta e check-in no mesmo app). Cadastre-se pelo meu link e ganhe 30 dias grátis:";
+    if (navigator.share) {
+      await navigator.share({ title: "Evolink", text, url: link }).catch(() => undefined);
+      return;
+    }
+    await navigator.clipboard.writeText(`${text} ${link}`).catch(() => undefined);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function copy() {
+    await navigator.clipboard.writeText(link).catch(() => undefined);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <section className="mt-8 overflow-hidden rounded-3xl bg-white shadow-[var(--card-shadow)]">
+      <div className="grid gap-5 p-6 md:grid-cols-[1fr_auto] md:items-center md:p-7">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-bold text-[var(--emerald)]"><Gift size={16} /> Indique e ganhe</p>
+          <h2 className="mt-1 text-xl font-bold tracking-tight">30 dias grátis para cada treinador que assinar</h2>
+          <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">Quem se cadastra pelo seu link ganha 30 dias de teste. Quando fizer o primeiro pagamento, somamos 30 dias na sua assinatura.</p>
+        </div>
+        <div className="flex gap-6 md:text-right">
+          <div><p className="text-2xl font-bold tabular">{data ? data.referrals.length : "–"}</p><p className="text-xs text-[var(--muted)]">indicados</p></div>
+          <div><p className="text-2xl font-bold tabular text-[var(--emerald)]">{data ? rewarded * 30 : "–"}</p><p className="text-xs text-[var(--muted)]">dias ganhos</p></div>
+        </div>
+      </div>
+      <div className="border-t border-[#f0f4f2] bg-[var(--surface)] p-4 md:px-7">
+        {data === null ? <Skeleton className="h-11 rounded-xl" /> : !data.code ? (
+          <p className="text-sm text-[var(--muted)]">Não foi possível gerar seu link agora.</p>
+        ) : (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex min-w-0 flex-1 items-center rounded-xl border border-[#dbe7e0] bg-white px-4 py-2.5 font-mono text-sm text-[#35483f]">
+              <span className="truncate">{link.replace("https://", "")}</span>
+            </div>
+            <Button kind="outline" onClick={copy}><span className="inline-flex items-center gap-2">{copied ? <Check size={16} /> : <Copy size={16} />}{copied ? "Copiado" : "Copiar"}</span></Button>
+            <Button onClick={share}><span className="inline-flex items-center gap-2"><Share2 size={16} /> Compartilhar</span></Button>
+          </div>
+        )}
+        {data && data.referrals.length > 0 && (
+          <ul className="mt-4 divide-y divide-[#e6eee9]">
+            {data.referrals.map(item => (
+              <li key={item.referredId} className="flex items-center gap-3 py-2.5 text-sm">
+                <span className="min-w-0 flex-1 truncate font-semibold">{item.name}</span>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${item.rewardedAt ? "bg-[#e7f4ec] text-[#087a50]" : "bg-[#f1f4f2] text-[#5f7169]"}`}>{item.rewardedAt ? "Assinou · +30 dias" : "Em teste"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
