@@ -4,11 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "bash scripts/dev-local.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "deploy": "bash .deploy/hostinger/deploy.sh"
+    "deploy": "bash .deploy/hostinger/deploy.sh",
+    "db:start": "supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,postgres-meta",
+    "db:reset": "supabase db reset",
+    "db:stop": "supabase stop"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
@@ -30,6 +34,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "supabase": "^2.118.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

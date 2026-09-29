@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BrandAuth } from "@/components/brand-auth";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
+import { ChatPage } from "@/components/chat-page";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
 import { CommunityFeedPage, WorkoutLogbookPage } from "@/components/workout-logbook-page";
 import {
@@ -17,7 +18,6 @@ import {
   ProfessionalTemplatesPage,
 } from "@/components/professional-pages";
 import {
-  LiveChat,
   LiveCheckin,
   LiveDiet,
   LiveEvolution,
@@ -134,7 +134,7 @@ export default function OperationalApp() {
       <LiveProfile viewer={viewer} inviteToken={searchParams.get("convite")} />
     );
   if (pathname === "/aluno/chat" || pathname === "/profissional/chat")
-    return <LiveChat viewer={viewer} />;
+    return <ChatPage viewer={viewer} />;
   if (pathname === "/profissional")
     return <LiveProfessionalDashboard viewer={viewer} />;
   if (pathname === "/profissional/financeiro")

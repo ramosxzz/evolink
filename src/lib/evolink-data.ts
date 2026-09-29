@@ -47,10 +47,10 @@ export async function getViewer(): Promise<Viewer | null> {
 
   const [{ data: student }, { data: relation }, { data: access }] = await Promise.all([
     supabase.from("student_profiles").select("goal, target_weight_kg, daily_water_goal_ml").eq("id", user.id).single(),
-    supabase.from("professional_students").select("professional_id, profiles:professional_id(id, full_name)").eq("student_id", user.id).eq("status", "active").maybeSingle(),
+    supabase.from("professional_students").select("professional_id, professional_profiles(profiles(id, full_name))").eq("student_id", user.id).eq("status", "active").maybeSingle(),
     supabase.from("student_profiles").select("access_status, suspension_reason").eq("id", user.id).maybeSingle(),
   ]);
-  const rawProfile = relation?.profiles as unknown as { id: string; full_name: string } | null;
+  const rawProfile = (relation?.professional_profiles as unknown as { profiles: { id: string; full_name: string } | null } | null)?.profiles ?? null;
   return {
     id: profile.id,
     fullName: profile.full_name,
@@ -98,15 +98,16 @@ export async function addWater(studentId: string, amountMl: number) {
   return createClient().from("water_logs").insert({ student_id: studentId, amount_ml: amountMl });
 }
 
-export async function getMessages(viewer: Viewer) {
-  if (!viewer.counterpart) return [];
-  const { data } = await createClient().from("messages").select("id, sender_id, recipient_id, body, created_at, read_at").or(`and(sender_id.eq.${viewer.id},recipient_id.eq.${viewer.counterpart.id}),and(sender_id.eq.${viewer.counterpart.id},recipient_id.eq.${viewer.id})`).order("created_at", { ascending: true }).limit(100);
+// Students talk to their linked professional; professionals pick the student.
+export async function getMessages(viewer: Viewer, counterpartId = viewer.counterpart?.id) {
+  if (!counterpartId) return [];
+  const { data } = await createClient().from("messages").select("id, sender_id, recipient_id, body, created_at, read_at").or(`and(sender_id.eq.${viewer.id},recipient_id.eq.${counterpartId}),and(sender_id.eq.${counterpartId},recipient_id.eq.${viewer.id})`).order("created_at", { ascending: true }).limit(100);
   return data ?? [];
 }
 
-export async function sendMessage(viewer: Viewer, body: string) {
-  if (!viewer.counterpart || !body.trim()) return { error: new Error("Nenhum profissional ou aluno vinculado.") };
-  return createClient().from("messages").insert({ sender_id: viewer.id, recipient_id: viewer.counterpart.id, body: body.trim() });
+export async function sendMessage(viewer: Viewer, body: string, counterpartId = viewer.counterpart?.id) {
+  if (!counterpartId || !body.trim()) return { data: null, error: new Error("Nenhum profissional ou aluno vinculado.") };
+  return createClient().from("messages").insert({ sender_id: viewer.id, recipient_id: counterpartId, body: body.trim() }).select("id, sender_id, recipient_id, body, created_at").single();
 }
 
 export async function getNotifications(viewerId: string) {
@@ -443,8 +444,8 @@ export async function sendCrmReminderNow(rule: CrmReminderRule) {
 }
 
 export async function getProfessionalCheckins(professionalId: string) {
-  const { data } = await createClient().from("check_ins").select("id, student_id, status, nutrition_score, training_days, energy_score, current_weight_kg, student_message, professional_feedback, submitted_at, profiles:student_id(full_name)").eq("professional_id", professionalId).in("status", ["submitted", "reviewed"]).order("submitted_at", { ascending: false }).limit(50);
-  return data ?? [];
+  const { data } = await createClient().from("check_ins").select("id, student_id, status, nutrition_score, training_days, energy_score, current_weight_kg, student_message, professional_feedback, submitted_at, student_profiles(profiles(full_name))").eq("professional_id", professionalId).in("status", ["submitted", "reviewed"]).order("submitted_at", { ascending: false }).limit(50);
+  return (data ?? []).map(({ student_profiles, ...row }) => ({ ...row, profiles: (student_profiles as unknown as { profiles: { full_name: string } | null } | null)?.profiles ?? null }));
 }
 
 export async function reviewCheckin(checkinId: string, feedback: string) {
