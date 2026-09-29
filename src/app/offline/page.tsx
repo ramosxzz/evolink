@@ -1,0 +1,1 @@
+export default function Offline(){return <main className="grid min-h-[100dvh] place-items-center p-6 text-center"><div><p className="text-5xl">◌</p><h1 className="mt-4 text-2xl font-bold">Você está offline</h1><p className="mt-2 text-slate-500">Reconecte-se para atualizar seus dados no Evolink.</p></div></main>}

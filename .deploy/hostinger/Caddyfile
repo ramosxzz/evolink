@@ -1,0 +1,6 @@
+# Bloco do Evolink no Caddyfile do proxy reverso da VPS.
+# O container `evolink-app` precisa estar na mesma rede Docker do Caddy.
+evolink.solairew.com.br {
+  encode zstd gzip
+  reverse_proxy evolink:3000
+}

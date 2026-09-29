@@ -1,0 +1,252 @@
+"use client";
+
+import { createClient } from "@/lib/supabase/client";
+import type { Viewer } from "@/lib/evolink-data";
+
+export type LogbookExercise = {
+  id: string;
+  name: string;
+  muscle_group: string | null;
+  sets: number | null;
+  repetitions: string | null;
+  rest_seconds: number | null;
+  suggested_load: string | null;
+  notes: string | null;
+  video_url: string | null;
+  technique: string | null;
+  target_rir: number | null;
+  target_rpe: number | null;
+  position: number;
+};
+
+export type WorkoutSetLog = {
+  id: string;
+  workout_log_id: string | null;
+  workout_exercise_id: string;
+  set_number: number | null;
+  repetitions_completed: number | null;
+  load_kg: number | null;
+  load_value: string | null;
+  rir: number | null;
+  rpe: number | null;
+  rest_seconds: number | null;
+  set_type: "warmup" | "working" | "drop" | "failure";
+  is_personal_record: boolean;
+  completed_at: string;
+};
+
+export type WorkoutSession = {
+  id: string;
+  student_id: string;
+  workout_plan_id: string;
+  status: "in_progress" | "completed" | "abandoned";
+  started_at: string;
+  completed_at: string | null;
+  duration_seconds: number | null;
+  total_volume_kg: number;
+  total_sets: number;
+  pr_count: number;
+};
+
+export type CommunityPost = {
+  id: string;
+  author_id: string;
+  caption: string | null;
+  visibility: "coach" | "community";
+  workout_title: string;
+  duration_seconds: number;
+  total_volume_kg: number;
+  total_sets: number;
+  pr_count: number;
+  exercise_summary: { name: string; sets: number; bestLoad: number }[];
+  created_at: string;
+  authorName: string;
+  likeCount: number;
+  likedByViewer: boolean;
+};
+
+export async function getLogbook(studentId: string) {
+  const supabase = createClient();
+  const { data: plan, error: planError } = await supabase
+    .from("workout_plans")
+    .select("id, title, objective, estimated_minutes, workout_exercises(id, name, muscle_group, sets, repetitions, rest_seconds, suggested_load, notes, video_url, technique, target_rir, target_rpe, position)")
+    .eq("student_id", studentId)
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (planError) return { plan: null, exercises: [] as LogbookExercise[], session: null, activeSets: [] as WorkoutSetLog[], history: [] as WorkoutSetLog[], error: planError };
+  if (!plan) return { plan: null, exercises: [] as LogbookExercise[], session: null, activeSets: [] as WorkoutSetLog[], history: [] as WorkoutSetLog[], error: null };
+
+  const exercises = [...(plan.workout_exercises ?? [])]
+    .sort((a, b) => a.position - b.position) as LogbookExercise[];
+  const [{ data: activeSession, error: sessionError }, historyResult] = await Promise.all([
+    supabase
+      .from("workout_logs")
+      .select("id, student_id, workout_plan_id, status, started_at, completed_at, duration_seconds, total_volume_kg, total_sets, pr_count")
+      .eq("student_id", studentId)
+      .eq("workout_plan_id", plan.id)
+      .eq("status", "in_progress")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    exercises.length
+      ? supabase
+          .from("workout_exercise_logs")
+          .select("id, workout_log_id, workout_exercise_id, set_number, repetitions_completed, load_kg, load_value, rir, rpe, rest_seconds, set_type, is_personal_record, completed_at")
+          .eq("student_id", studentId)
+          .in("workout_exercise_id", exercises.map((exercise) => exercise.id))
+          .order("completed_at", { ascending: false })
+          .limit(500)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  const allLogs = (historyResult.data ?? []) as WorkoutSetLog[];
+  const session = activeSession as WorkoutSession | null;
+  return {
+    plan: { id: plan.id, title: plan.title, objective: plan.objective, estimatedMinutes: plan.estimated_minutes },
+    exercises,
+    session,
+    activeSets: session ? allLogs.filter((entry) => entry.workout_log_id === session.id) : [],
+    history: session ? allLogs.filter((entry) => entry.workout_log_id !== session.id) : allLogs,
+    error: sessionError ?? historyResult.error,
+  };
+}
+
+export async function startWorkout(studentId: string, workoutPlanId: string) {
+  return createClient()
+    .from("workout_logs")
+    .insert({ student_id: studentId, workout_plan_id: workoutPlanId, status: "in_progress", started_at: new Date().toISOString() })
+    .select("id, student_id, workout_plan_id, status, started_at, completed_at, duration_seconds, total_volume_kg, total_sets, pr_count")
+    .single();
+}
+
+export async function saveWorkoutSet(input: {
+  studentId: string;
+  sessionId: string;
+  exerciseId: string;
+  setNumber: number;
+  repetitions: number;
+  loadKg: number;
+  rir?: number | null;
+  setType: WorkoutSetLog["set_type"];
+  restSeconds: number;
+  isPersonalRecord: boolean;
+}) {
+  return createClient()
+    .from("workout_exercise_logs")
+    .upsert({
+      student_id: input.studentId,
+      workout_log_id: input.sessionId,
+      workout_exercise_id: input.exerciseId,
+      set_number: input.setNumber,
+      repetitions_completed: input.repetitions,
+      load_kg: input.loadKg,
+      load_value: String(input.loadKg),
+      rir: input.rir ?? null,
+      rest_seconds: input.restSeconds,
+      set_type: input.setType,
+      is_personal_record: input.isPersonalRecord,
+      completed_at: new Date().toISOString(),
+    }, { onConflict: "workout_log_id,workout_exercise_id,set_number" })
+    .select("id, workout_log_id, workout_exercise_id, set_number, repetitions_completed, load_kg, load_value, rir, rpe, rest_seconds, set_type, is_personal_record, completed_at")
+    .single();
+}
+
+export async function removeWorkoutSet(sessionId: string, exerciseId: string, setNumber: number) {
+  return createClient()
+    .from("workout_exercise_logs")
+    .delete()
+    .eq("workout_log_id", sessionId)
+    .eq("workout_exercise_id", exerciseId)
+    .eq("set_number", setNumber);
+}
+
+export async function completeWorkout(input: {
+  viewer: Viewer;
+  session: WorkoutSession;
+  workoutTitle: string;
+  durationSeconds: number;
+  totalVolumeKg: number;
+  totalSets: number;
+  prCount: number;
+  publish: boolean;
+  visibility: "coach" | "community";
+  caption: string;
+  exerciseSummary: { name: string; sets: number; bestLoad: number }[];
+}) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("workout_logs")
+    .update({
+      status: "completed",
+      completed_at: new Date().toISOString(),
+      duration_seconds: input.durationSeconds,
+      total_volume_kg: input.totalVolumeKg,
+      total_sets: input.totalSets,
+      pr_count: input.prCount,
+    })
+    .eq("id", input.session.id)
+    .eq("student_id", input.viewer.id);
+  if (error) return { error, postError: null };
+  if (!input.publish) return { error: null, postError: null };
+
+  const { error: profileError } = await supabase.from("social_profiles").upsert({
+    id: input.viewer.id,
+    display_name: input.viewer.fullName,
+    is_public: true,
+  });
+  if (profileError) return { error: null, postError: profileError };
+
+  const { error: postError } = await supabase.from("social_posts").insert({
+    author_id: input.viewer.id,
+    workout_log_id: input.session.id,
+    visibility: input.visibility,
+    caption: input.caption.trim() || null,
+    workout_title: input.workoutTitle,
+    duration_seconds: input.durationSeconds,
+    total_volume_kg: input.totalVolumeKg,
+    total_sets: input.totalSets,
+    pr_count: input.prCount,
+    exercise_summary: input.exerciseSummary,
+  });
+  return { error: null, postError };
+}
+
+export async function getCommunityFeed(viewerId: string) {
+  const { data, error } = await createClient()
+    .from("social_posts")
+    .select("id, author_id, caption, visibility, workout_title, duration_seconds, total_volume_kg, total_sets, pr_count, exercise_summary, created_at, social_profiles!social_posts_author_id_fkey(display_name), social_post_likes(user_id)")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) return { posts: [] as CommunityPost[], error };
+  const posts = (data ?? []).map((post) => {
+    const profile = post.social_profiles as unknown as { display_name: string } | null;
+    const likes = (post.social_post_likes ?? []) as { user_id: string }[];
+    return {
+      id: post.id,
+      author_id: post.author_id,
+      caption: post.caption,
+      visibility: post.visibility as CommunityPost["visibility"],
+      workout_title: post.workout_title,
+      duration_seconds: post.duration_seconds,
+      total_volume_kg: Number(post.total_volume_kg),
+      total_sets: post.total_sets,
+      pr_count: post.pr_count,
+      exercise_summary: (post.exercise_summary ?? []) as CommunityPost["exercise_summary"],
+      created_at: post.created_at,
+      authorName: profile?.display_name ?? "Atleta Evolink",
+      likeCount: likes.length,
+      likedByViewer: likes.some((like) => like.user_id === viewerId),
+    };
+  });
+  return { posts, error: null };
+}
+
+export async function togglePostLike(postId: string, userId: string, liked: boolean) {
+  const supabase = createClient();
+  if (liked) return supabase.from("social_post_likes").delete().eq("post_id", postId).eq("user_id", userId);
+  return supabase.from("social_post_likes").insert({ post_id: postId, user_id: userId });
+}
+
