@@ -17,6 +17,16 @@ services:
       SEND_EMAIL_HOOK_SECRET: ${SEND_EMAIL_HOOK_SECRET:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-Evolink <admin@solairew.com.br>}
+      INTER_CLIENT_ID: ${INTER_CLIENT_ID:-}
+      INTER_CLIENT_SECRET: ${INTER_CLIENT_SECRET:-}
+      INTER_PIX_KEY: ${INTER_PIX_KEY:-}
+      INTER_ACCOUNT: ${INTER_ACCOUNT:-}
+      INTER_ENV: ${INTER_ENV:-production}
+      INTER_CERT_PATH: /run/secrets/inter/certificado.crt
+      INTER_KEY_PATH: /run/secrets/inter/chave.key
+    # Outside /opt/evolink so the deploy rsync --delete never touches it.
+    volumes:
+      - /opt/evolink-secrets/inter:/run/secrets/inter:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/login"]
