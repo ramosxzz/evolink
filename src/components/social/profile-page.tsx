@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, Camera, Check, Lock, MessageCircle, Pencil, Trophy, UserCheck, UserPlus } from "lucide-react";
 import { Button, Shell } from "@/components/app-shell";
-import { AchievementBadge } from "@/components/social/achievement-badge";
+import { Medal3D } from "@/components/social/medal-3d";
 import { FramedAvatar } from "@/components/social/framed-avatar";
 import { PostCard } from "@/components/social/post-card";
 import { ProgressBar } from "@/components/ui/motion";
@@ -108,8 +108,8 @@ export function ProfilePage({ viewer, profileId }: { viewer: Viewer; profileId: 
             <div className="mt-3"><ProgressBar value={level.progress} className="bg-gradient-to-r from-[#087a50] to-[#b8e986]" /></div>
             <p className="mt-1.5 text-xs text-[#71837b]">{level.toNext} pontos para o nível {level.level + 1}</p>
             {showcase.length > 0 ? (
-              <div className="mt-4 flex flex-wrap gap-3">
-                {showcase.map(item => <AchievementBadge key={item.code} achievement={item} earned size="sm" />)}
+              <div className="mt-5 flex flex-wrap gap-4">
+                {showcase.map(item => <Medal3D key={item.code} achievement={item} size="sm" ribbon={false} />)}
               </div>
             ) : (
               <p className="mt-4 text-sm text-[#71837b]">Nenhuma medalha ainda.</p>

@@ -7,6 +7,7 @@ import { Share2, Sparkles, Trophy } from "lucide-react";
 import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { AchievementBadge, tierStyles } from "@/components/social/achievement-badge";
 import { FramedAvatar } from "@/components/social/framed-avatar";
+import { Medal3D } from "@/components/social/medal-3d";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
 import type { Viewer } from "@/lib/evolink-data";
 import { createPost, getAchievementCatalog, getMyAchievements, levelFor, type Achievement, type Frame } from "@/lib/social-data";
@@ -89,6 +90,24 @@ export function AchievementsPage({ viewer }: { viewer: Viewer }) {
           <Button kind="soft" onClick={() => router.push(`/u/${viewer.id}`)} className="shrink-0"><Sparkles size={16} />Meu perfil</Button>
         </div>
       </Reveal>
+
+      {earned.size > 0 && (
+        <Reveal index={1} className="mt-6 overflow-hidden rounded-3xl border border-[#e2ece6] bg-[radial-gradient(circle_at_50%_0%,#ffffff_0%,#eef5f1_70%)] p-6 soft-shadow">
+          <h2 className="font-bold">Vitrine</h2>
+          <p className="text-xs text-[#71837b]">Passe o dedo ou o mouse sobre as medalhas.</p>
+          <div className="mt-5 flex gap-6 overflow-x-auto pb-4 pt-2">
+            {catalog.achievements
+              .filter(item => earned.has(item.code))
+              .sort((a, b) => (earned.get(b.code) ?? "").localeCompare(earned.get(a.code) ?? ""))
+              .map(item => (
+                <div key={item.code} className="flex shrink-0 flex-col items-center gap-3">
+                  <Medal3D achievement={item} size="md" />
+                  <p className="max-w-24 text-center text-xs font-bold leading-tight">{item.title}</p>
+                </div>
+              ))}
+          </div>
+        </Reveal>
+      )}
 
       {categories.map((category, categoryIndex) => {
         const items = catalog.achievements.filter(item => item.category === category.code);

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
-import { AchievementBadge } from "@/components/social/achievement-badge";
+import { Medal3D } from "@/components/social/medal-3d";
 import { getAchievementCatalog, type Achievement } from "@/lib/social-data";
 import { createClient } from "@/lib/supabase/client";
 
@@ -68,9 +68,9 @@ export function AchievementCelebration({ userId }: { userId: string }) {
             className="relative w-full max-w-sm rounded-[2rem] bg-white p-7 text-center shadow-2xl"
           >
             <button onClick={close} aria-label="Fechar" className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full text-[#91a39b] hover:bg-[#f3f8f5]"><X size={17} /></button>
-            <motion.div className="mx-auto w-fit" initial={reduceMotion ? false : { rotate: -20 }} animate={{ rotate: [-20, 12, -6, 0] }} transition={{ duration: 0.9 }}>
-              <AchievementBadge achievement={current} earned size="lg" />
-            </motion.div>
+            <div className="mx-auto -mt-2 w-fit">
+              <Medal3D achievement={current} size="lg" spin />
+            </div>
             <p className="mt-5 text-xs font-bold tracking-[.18em] text-[#d98a00]">NOVA CONQUISTA</p>
             <h2 className="mt-1 text-2xl font-black tracking-tight">{current.title}</h2>
             <p className="mt-2 text-sm text-[#71837b]">{current.description}</p>

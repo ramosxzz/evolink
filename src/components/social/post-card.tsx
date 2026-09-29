@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Clock3, Dumbbell, Flame, Globe2, Heart, Lock, Medal, MessageCircle, MoreHorizontal, Send, Share2, Trash2, Users } from "lucide-react";
-import { AchievementBadge } from "@/components/social/achievement-badge";
+import { Medal3D } from "@/components/social/medal-3d";
 import { FramedAvatar } from "@/components/social/framed-avatar";
 import { addComment, deleteComment, deletePost, getComments, setLike, type Achievement, type Comment, type FeedPost } from "@/lib/social-data";
 
@@ -107,7 +107,7 @@ export function PostCard({ post, viewerId, achievements, onDeleted }: { post: Fe
 
       {achievement && (
         <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#fffaf0] p-4">
-          <AchievementBadge achievement={achievement} earned />
+          <Medal3D achievement={achievement} size="sm" ribbon={false} />
           <div>
             <p className="text-xs font-bold tracking-[.12em] text-[#9a6800]">NOVA CONQUISTA</p>
             <p className="font-bold">{achievement.title}</p>
