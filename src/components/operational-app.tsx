@@ -7,6 +7,7 @@ import { Button, PageTitle, Shell } from "@/components/app-shell";
 import { ChatPage } from "@/components/chat-page";
 import { EvolutionPage } from "@/components/evolution-page";
 import { StudentHomePage } from "@/components/student-home-page";
+import { StudentProfilePage } from "@/components/student-profile-page";
 import { ProfessionalCrmPage } from "@/components/professional-crm-page";
 import { CommunityFeedPage, WorkoutLogbookPage } from "@/components/workout-logbook-page";
 import {
@@ -27,7 +28,6 @@ import {
   LiveProfessionalDashboard,
   LiveProfessionalStudentPage,
   LiveProfessionalStudentsPage,
-  LiveProfile,
 } from "@/components/operational-pages";
 import { getViewer, invalidateViewer, VIEWER_CHANGED_EVENT, type Viewer } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
@@ -142,7 +142,7 @@ export default function OperationalApp() {
   if (pathname === "/aluno/habitos") return <HabitsPage viewer={viewer} />;
   if (pathname === "/aluno/perfil")
     return (
-      <LiveProfile viewer={viewer} inviteToken={searchParams.get("convite")} />
+      <StudentProfilePage viewer={viewer} inviteToken={searchParams.get("convite")} />
     );
   if (pathname === "/aluno/chat" || pathname === "/profissional/chat")
     return <ChatPage viewer={viewer} />;

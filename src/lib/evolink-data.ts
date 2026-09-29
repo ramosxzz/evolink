@@ -511,6 +511,30 @@ export async function publishDiet(professionalId: string, studentId: string, val
   return { error: null };
 }
 
+export async function getStudentAccount(studentId: string) {
+  const supabase = createClient();
+  const [profile, student] = await Promise.all([
+    supabase.from("profiles").select("full_name, phone").eq("id", studentId).single(),
+    supabase.from("student_profiles").select("goal, target_weight_kg, daily_water_goal_ml").eq("id", studentId).single(),
+  ]);
+  return { profile: profile.data, student: student.data, error: profile.error ?? student.error };
+}
+
+export async function saveStudentAccount(studentId: string, values: { fullName: string; phone: string; goal: string; targetWeightKg: number | null; waterGoalMl: number }) {
+  const supabase = createClient();
+  const [profile, student] = await Promise.all([
+    supabase.from("profiles").update({ full_name: values.fullName.trim(), phone: values.phone.trim() || null }).eq("id", studentId),
+    supabase.from("student_profiles").update({ goal: values.goal.trim() || null, target_weight_kg: values.targetWeightKg, daily_water_goal_ml: values.waterGoalMl }).eq("id", studentId),
+  ]);
+  const error = profile.error ?? student.error;
+  if (!error) refreshViewer();
+  return { error };
+}
+
+export async function changePassword(password: string) {
+  return createClient().auth.updateUser({ password });
+}
+
 export async function getWeekCheckin(studentId: string) {
   const { data } = await createClient().from("check_ins").select("id, status, professional_feedback, submitted_at, reviewed_at").eq("student_id", studentId).eq("week_of", weekStart()).maybeSingle();
   return data;
