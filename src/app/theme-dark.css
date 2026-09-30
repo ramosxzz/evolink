@@ -195,5 +195,6 @@ html.dark .text-\[\#d9a300\]:not(.bg-\[\#e8603c\]):not(.bg-\[\#5fd39b\]):not(.bg
 html.dark .text-\[\#e0245e\]:not(.bg-\[\#e8603c\]):not(.bg-\[\#5fd39b\]):not(.bg-\[\#90e6a4\]\/45):not(.bg-\[\#b8e986\]):not(.bg-\[\#ff385c\]):not(.bg-\[\#ffcc33\]):not(.bg-\[\#b8e986\]\/20) { color: hsl(341 75% 60%); }
 html.dark .text-\[\#e3ebe6\]:not(.bg-\[\#e8603c\]):not(.bg-\[\#5fd39b\]):not(.bg-\[\#90e6a4\]\/45):not(.bg-\[\#b8e986\]):not(.bg-\[\#ff385c\]):not(.bg-\[\#ffcc33\]):not(.bg-\[\#b8e986\]\/20) { color: hsl(143 17% 38%); }
 html.dark .text-\[\#f2b705\]:not(.bg-\[\#e8603c\]):not(.bg-\[\#5fd39b\]):not(.bg-\[\#90e6a4\]\/45):not(.bg-\[\#b8e986\]):not(.bg-\[\#ff385c\]):not(.bg-\[\#ffcc33\]):not(.bg-\[\#b8e986\]\/20) { color: hsl(45 80% 61%); }
+html.dark .text-\[\#fc4c02\]:not(.bg-\[\#e8603c\]):not(.bg-\[\#5fd39b\]):not(.bg-\[\#90e6a4\]\/45):not(.bg-\[\#b8e986\]):not(.bg-\[\#ff385c\]):not(.bg-\[\#ffcc33\]):not(.bg-\[\#b8e986\]\/20) { color: hsl(18 80% 61%); }
 html.dark .to-\[\#c9d1d8\] { --tw-gradient-to: hsl(208 16% 14%); }
 html.dark .via-\[\#c9b3ff\] { --tw-gradient-via: hsl(257 32% 15%); }

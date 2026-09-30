@@ -24,6 +24,9 @@ export type CardioLog = {
   distance_km: number | null;
   perceived_exertion: number | null;
   note: string | null;
+  source?: "manual" | "strava";
+  external_id?: string | null;
+  avg_heart_rate?: number | null;
 };
 
 export type HabitKind = "water" | "steps" | "sleep" | "cardio" | "supplement" | "custom";
@@ -44,7 +47,7 @@ export type HabitLog = { id: string; habit_goal_id: string; logged_for: string; 
 export const cardioModalities = ["Corrida", "Caminhada", "Bicicleta", "Esteira", "Elíptico", "Escada", "Natação", "Outro"] as const;
 
 const planColumns = "id, title, modality, duration_minutes, sessions_per_week, intensity, intensity_detail, notes, status";
-const logColumns = "id, cardio_plan_id, modality, completed_at, duration_minutes, distance_km, perceived_exertion, note";
+const logColumns = "id, cardio_plan_id, modality, completed_at, duration_minutes, distance_km, perceived_exertion, note, source, external_id, avg_heart_rate";
 const goalColumns = "id, kind, title, target_value, unit, instructions, active, position";
 
 // Student --------------------------------------------------------------------
@@ -153,3 +156,30 @@ export async function removeHabitGoal(goalId: string) {
   // Deactivate instead of delete, so past logs keep their history.
   return createClient().from("habit_goals").update({ active: false }).eq("id", goalId);
 }
+
+// Strava ---------------------------------------------------------------------
+
+export type StravaStatus = { athleteName: string | null; connectedAt: string; lastSyncAt: string | null } | null;
+
+export async function getStravaStatus(): Promise<StravaStatus> {
+  const { data } = await createClient().rpc("my_strava_connection");
+  const row = (data as { athlete_name: string | null; connected_at: string; last_sync_at: string | null }[] | null)?.[0];
+  return row ? { athleteName: row.athlete_name, connectedAt: row.connected_at, lastSyncAt: row.last_sync_at } : null;
+}
+
+async function stravaRequest(path: string) {
+  const { data: { session } } = await createClient().auth.getSession();
+  const response = await fetch(path, { method: "POST", headers: { Authorization: `Bearer ${session?.access_token ?? ""}` } });
+  const body = await response.json().catch(() => ({}));
+  return response.ok ? { body, error: null } : { body, error: (body.error as string) ?? "Não foi possível falar com o Strava." };
+}
+
+/** Sends the student to Strava to authorize; Strava returns to /aluno/cardio. */
+export async function connectStrava() {
+  const { body, error } = await stravaRequest("/api/strava/connect");
+  if (error || !body.url) return error ?? "Não foi possível conectar.";
+  window.location.href = body.url as string;
+  return null;
+}
+
+export const disconnectStrava = () => stravaRequest("/api/strava/disconnect");

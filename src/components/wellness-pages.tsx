@@ -10,6 +10,10 @@ import { addDays, localDate, weekStart } from "@/lib/dates";
 import type { Viewer } from "@/lib/evolink-data";
 import {
   cardioModalities,
+  connectStrava,
+  disconnectStrava,
+  getStravaStatus,
+  type StravaStatus,
   deleteCardioLog,
   getStudentCardio,
   getStudentHabits,
@@ -22,6 +26,7 @@ import {
   type HabitLog,
 } from "@/lib/wellness-data";
 import { Modal } from "@/components/ui/modal";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const card = "rounded-3xl border border-[#e2ece6] bg-white p-5 soft-shadow";
 const field = "mt-2 w-full rounded-xl border border-[#dbe7e0] bg-white px-4 py-3 text-sm font-normal outline-none transition focus:border-[#087a50] focus:ring-4 focus:ring-[#dff3e7]";
@@ -70,7 +75,9 @@ export function CardioPage({ viewer }: { viewer: Viewer }) {
         <Button onClick={() => setDraft({})}><Plus size={17} />Registrar cardio</Button>
       </div>
 
-      <div className="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <StravaCard studentId={viewer.id} onImported={() => getStudentCardio(viewer.id).then(result => { setPlans(result.plans); setLogs(result.logs); })} />
+
+      <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Reveal index={0}><Tile icon={Timer} label="MINUTOS NA SEMANA" value={stats.weekMinutes} /></Reveal>
         <Reveal index={1}><Tile icon={Activity} label="SESSÕES NA SEMANA" value={stats.weekSessions} suffix={prescribed ? ` / ${prescribed}` : ""} /></Reveal>
         <Reveal index={2}><Tile icon={Footprints} label="KM EM 30 DIAS" value={stats.monthKm} decimals={1} /></Reveal>
@@ -125,7 +132,13 @@ export function CardioPage({ viewer }: { viewer: Viewer }) {
                         {new Date(log.completed_at).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })} · {log.duration_minutes} min
                         {log.distance_km ? ` · ${String(log.distance_km).replace(".", ",")} km` : ""}
                         {log.perceived_exertion ? ` · esforço ${log.perceived_exertion}/10` : ""}
+                        {log.avg_heart_rate ? ` · ${log.avg_heart_rate} bpm` : ""}
                       </p>
+                      {log.source === "strava" && log.external_id && (
+                        <a href={`https://www.strava.com/activities/${log.external_id}`} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-bold text-[#fc4c02] hover:underline">
+                          via Strava · Ver no Strava
+                        </a>
+                      )}
                     </div>
                     <button
                       aria-label="Excluir registro"
@@ -236,6 +249,79 @@ function CardioSheet({ plan, onClose, onSave }: { plan?: CardioPlan; onClose: ()
 
 const habitIcons: Record<HabitKind, typeof Check> = { water: Sparkles, steps: Footprints, sleep: Moon, cardio: HeartPulse, supplement: Pill, custom: Check };
 const weekDays = () => Array.from({ length: 7 }, (_, index) => localDate(addDays(index - 6)));
+
+const stravaMessages: Record<string, { text: string; ok: boolean }> = {
+  conectado: { text: "Strava conectado. Suas atividades dos últimos 30 dias foram importadas.", ok: true },
+  cancelado: { text: "Conexão com o Strava cancelada.", ok: false },
+  expirado: { text: "O pedido de conexão expirou. Tente de novo.", ok: false },
+  "sem-permissao": { text: "Para importar, autorize o acesso às suas atividades no Strava.", ok: false },
+  erro: { text: "Não foi possível conectar ao Strava agora. Tente de novo.", ok: false },
+};
+
+function StravaCard({ studentId, onImported }: { studentId: string; onImported: () => void }) {
+  const [status, setStatus] = useCached<StravaStatus | undefined>(`strava:${studentId}`, undefined);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const result = new URLSearchParams(window.location.search).get("strava");
+    getStravaStatus().then(value => {
+      if (!active) return;
+      setStatus(value);
+      if (result && stravaMessages[result]) {
+        setMessage(stravaMessages[result]);
+        if (result === "conectado") onImported();
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    });
+    return () => { active = false; };
+    // Reads the redirect result once when the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentId]);
+
+  async function connect() {
+    setBusy(true); setMessage(null);
+    const error = await connectStrava();
+    if (error) { setBusy(false); setMessage({ text: error, ok: false }); }
+  }
+
+  async function disconnect() {
+    setBusy(true);
+    const { error } = await disconnectStrava();
+    setBusy(false);
+    if (error) return setMessage({ text: error, ok: false });
+    setStatus(null);
+    setMessage({ text: "Strava desconectado. As atividades já importadas continuam no seu histórico.", ok: true });
+  }
+
+  if (status === undefined) return <Skeleton className="mt-6 h-[74px] rounded-3xl" />;
+  return (
+    <section className="mt-6 rounded-3xl border border-[#e2ece6] bg-white p-4 soft-shadow md:px-5">
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#fc4c02] text-white" aria-hidden>
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor"><path d="M15.4 17.9 13.3 13.7h-3.1L15.4 24l5.2-10.3h-3.1zM10.2 0 3.3 13.7h4.1l2.8-5.5 2.8 5.5h4.1z" /></svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold">{status ? `Strava conectado${status.athleteName ? ` · ${status.athleteName}` : ""}` : "Conecte seu Strava"}</p>
+          <p className="text-sm text-[#71837b]">
+            {status
+              ? status.lastSyncAt ? `Corridas e pedais entram sozinhos. Última atividade recebida em ${new Date(status.lastSyncAt).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}.` : "Corridas e pedais entram sozinhos assim que chegam ao Strava."
+              : "Suas atividades do relógio ou do app entram aqui automaticamente, sem registrar à mão."}
+          </p>
+        </div>
+        {status ? (
+          <Button kind="ghost" loading={busy} disabled={busy} onClick={disconnect}>{busy ? "Desconectando" : "Desconectar"}</Button>
+        ) : (
+          <button onClick={connect} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-[#fc4c02] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#e34402] disabled:opacity-70">
+            {busy ? "Abrindo o Strava..." : "Conectar com Strava"}
+          </button>
+        )}
+      </div>
+      {message && <p role={message.ok ? "status" : "alert"} className={`mt-3 rounded-2xl px-4 py-2.5 text-sm font-medium ${message.ok ? "bg-[#e7f4ec] text-[#087a50]" : "bg-[#fdecec] text-[#a12c2c]"}`}>{message.text}</p>}
+    </section>
+  );
+}
 
 export function HabitsPage({ viewer }: { viewer: Viewer }) {
   const reduceMotion = useReducedMotion();
