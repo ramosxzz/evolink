@@ -1,10 +1,11 @@
 import { adminClient } from "@/lib/server/billing";
-import { exchangeCode, importRecent, readState, type StravaConnection } from "@/lib/server/strava";
+import { exchangeCode, importRecent, readState, site, type StravaConnection } from "@/lib/server/strava";
 
 // Strava redirects here after the student authorizes (or cancels).
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const back = (status: string) => Response.redirect(new URL(`/aluno/cardio?strava=${status}`, process.env.PUBLIC_SITE_URL || url.origin), 302);
+  // Behind the proxy request.url carries the container address, so use the public site.
+  const back = (status: string) => Response.redirect(new URL(`/aluno/cardio?strava=${status}`, site()), 302);
   const studentId = readState(url.searchParams.get("state") ?? "");
   const code = url.searchParams.get("code");
   if (url.searchParams.get("error") || !code) return back("cancelado");

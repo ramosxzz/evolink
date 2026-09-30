@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // Strava API: OAuth connect, token refresh and activity import into cardio_logs.
 
 const API = "https://www.strava.com/api/v3";
-const site = () => process.env.PUBLIC_SITE_URL || "https://evolink.solairew.com.br";
+export const site = () => process.env.PUBLIC_SITE_URL || "https://evolink.solairew.com.br";
 export const stravaConfigured = () => Boolean(process.env.STRAVA_CLIENT_ID && process.env.STRAVA_CLIENT_SECRET);
 export const stravaCallbackUrl = () => `${site()}/api/strava/callback`;
 
