@@ -298,7 +298,8 @@ function StravaCard({ studentId, onImported }: { studentId: string; onImported: 
   if (status === undefined) return <Skeleton className="mt-6 h-[74px] rounded-3xl" />;
   return (
     <section className="mt-6 rounded-3xl border border-[#e2ece6] bg-white p-4 soft-shadow md:px-5">
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-4 sm:items-center">
         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#fc4c02] text-white" aria-hidden>
           <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor"><path d="M15.4 17.9 13.3 13.7h-3.1L15.4 24l5.2-10.3h-3.1zM10.2 0 3.3 13.7h4.1l2.8-5.5 2.8 5.5h4.1z" /></svg>
         </span>
@@ -310,10 +311,11 @@ function StravaCard({ studentId, onImported }: { studentId: string; onImported: 
               : "Suas atividades do relógio ou do app entram aqui automaticamente, sem registrar à mão."}
           </p>
         </div>
+        </div>
         {status ? (
-          <Button kind="ghost" loading={busy} disabled={busy} onClick={disconnect}>{busy ? "Desconectando" : "Desconectar"}</Button>
+          <Button kind="ghost" className="w-full sm:w-auto" loading={busy} disabled={busy} onClick={disconnect}>{busy ? "Desconectando" : "Desconectar"}</Button>
         ) : (
-          <button onClick={connect} disabled={busy} className="inline-flex items-center gap-2 rounded-xl bg-[#fc4c02] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#e34402] disabled:opacity-70">
+          <button onClick={connect} disabled={busy} className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#fc4c02] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#e34402] disabled:opacity-70 sm:w-auto sm:py-2.5">
             {busy ? "Abrindo o Strava..." : "Conectar com Strava"}
           </button>
         )}
