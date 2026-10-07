@@ -9,6 +9,7 @@ import { Monitor, Moon, Sun, BadgeCheck, BriefcaseBusiness, UserSearch,
   Flag, LayoutGrid, Library, LogOut, Medal, MessageCircle, Plus, Settings, Target, TrendingUp, Trophy, UserRound, Users,
 } from "lucide-react";
 import { AchievementCelebration } from "@/components/social/achievement-celebration";
+import { ProtocolPrivacyOverlay } from "@/components/protected-protocol-surface";
 import { Modal } from "@/components/ui/modal";
 import { getNotifications, getViewer, markNotificationsRead } from "@/lib/evolink-data";
 import { createClient } from "@/lib/supabase/client";
@@ -90,6 +91,9 @@ export function AppFrame({ profile, children }: { profile: Profile; children: Re
   // Pages reached from the user menu or links, which are not in the sidebar.
   const extraTitles: [string, string][] = [["/aluno/perfil", "Conta"], ["/profissional/configuracoes", "Configurações"], ["/u/", "Perfil"], ["/aluno/check-in", "Check-in"], ["/profissional/treinos", "Treinos"], ["/profissional/dietas", "Dietas"], ["/treinadores/", "Treinador"]];
   const title = current?.label ?? extraTitles.find(([prefix]) => path.startsWith(prefix))?.[1] ?? "";
+  const protectedKind = profile === "student"
+    ? path.startsWith("/aluno/treino") ? "TREINO" : path.startsWith("/aluno/dieta") ? "DIETA" : null
+    : null;
 
   useEffect(() => {
     let active = true;
@@ -114,6 +118,7 @@ export function AppFrame({ profile, children }: { profile: Profile; children: Re
       <div className="min-h-[100dvh] bg-[var(--surface)]">
         <InstallPWAButton />
         {profile === "student" && viewer && <AchievementCelebration userId={viewer.id} />}
+        {protectedKind && viewer && <ProtocolPrivacyOverlay viewer={{ id: viewer.id, fullName: viewer.name }} kind={protectedKind} />}
 
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-[var(--line)] bg-white lg:flex">
           <button onClick={() => go(profile === "student" ? "/aluno" : "/profissional")} className="flex h-16 shrink-0 items-center gap-2.5 px-6">

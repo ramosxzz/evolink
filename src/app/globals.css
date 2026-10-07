@@ -7,7 +7,7 @@
   --ink:#10291f; --muted:#5f7169; --line:#e3ebe6; --mint:#eaf5ef; --emerald:#087a50; --emerald-dark:#065f3e;
   --lime:#b8e986; --surface:#f4f7f5; --card:#ffffff; --ring:#d5efe0; --card-shadow:0 1px 2px rgba(16,46,37,.05), 0 8px 24px -12px rgba(16,46,37,.12);
   --skeleton-a:#e8efeb; --skeleton-b:#f5f9f7; --scrollbar:#c7d8d0; --soft-ink:#065f3e;
-  --water-vessel:#f3f9fc; --water-vessel-line:#bfdae9; --water-fill-top:#75c7ed; --water-fill-bottom:#2387bf;
+  --water-card-top:rgba(125,202,238,.22); --water-card-bottom:rgba(47,151,210,.34); --water-surface:#5db5e1; --water-surface-glow:rgba(76,169,216,.35); --water-action:rgba(238,248,253,.86); --water-action-hover:rgba(226,243,251,.95); --water-action-line:rgba(145,200,230,.65);
   color-scheme:light;
 }
 /* Dark theme: toggled by the "dark" class on <html> (see src/lib/theme.ts). */
@@ -15,7 +15,7 @@ html.dark {
   --ink:#e6efea; --muted:#9aaea5; --line:#24332d; --mint:#16291f; --emerald:#1a9e68; --emerald-dark:#138a59;
   --surface:#0c1411; --card:#131d19; --ring:#1d3a2c; --card-shadow:0 1px 2px rgba(0,0,0,.35), 0 10px 28px -14px rgba(0,0,0,.7);
   --skeleton-a:#18231f; --skeleton-b:#223029; --scrollbar:#2b3b34; --soft-ink:#86e3b5;
-  --water-vessel:#17282d; --water-vessel-line:#355966; --water-fill-top:#4aadd7; --water-fill-bottom:#176a98;
+  --water-card-top:rgba(54,158,202,.30); --water-card-bottom:rgba(24,107,154,.50); --water-surface:#4bafd8; --water-surface-glow:rgba(61,165,207,.32); --water-action:rgba(23,53,63,.82); --water-action-hover:rgba(29,66,78,.94); --water-action-line:rgba(68,128,151,.70);
   color-scheme:dark;
 }
 * { box-sizing:border-box; }

@@ -136,41 +136,29 @@ function WorkoutCard({ data, onOpen }: { data: HomeData | null; onOpen: () => vo
   );
 }
 
-/** A compact vessel keeps progress visible without turning the entire card into water. */
-function WaterGauge({ level, pulse, reduceMotion }: { level: number; pulse: number; reduceMotion: boolean }) {
-  const progress = Math.max(0.035, Math.min(1, level));
+/** The whole card becomes a calm reservoir while the foreground stays legible. */
+function WaterLayer({ level, pulse, reduceMotion }: { level: number; pulse: number; reduceMotion: boolean }) {
+  const progress = Math.max(0, Math.min(1, level));
   return (
-    <div aria-hidden className="relative grid h-[92px] w-[58px] shrink-0 place-items-center">
-      {pulse > 0 && !reduceMotion && (
-        <motion.span
-          key={pulse}
-          className="absolute inset-1 rounded-[22px] border border-[#58aee8]/55"
-          initial={{ scale: 0.86, opacity: 0.75 }}
-          animate={{ scale: 1.26, opacity: 0 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        />
-      )}
-      <div className="relative h-[86px] w-[48px] overflow-hidden rounded-[19px] border border-[var(--water-vessel-line)] bg-[var(--water-vessel)] shadow-[inset_0_1px_0_rgba(255,255,255,.5)]">
-        <motion.div
-          className="absolute inset-[4px] origin-bottom overflow-hidden rounded-[14px] bg-gradient-to-t from-[var(--water-fill-bottom)] to-[var(--water-fill-top)]"
-          initial={false}
-          animate={{ scaleY: progress }}
-          transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 105, damping: 18, mass: 0.8 }}
-        >
-          {pulse > 0 && !reduceMotion && (
-            <motion.span
-              key={`shine-${pulse}`}
-              className="absolute inset-y-0 w-5 -skew-x-12 bg-white/30 blur-[2px]"
-              initial={{ x: -28 }}
-              animate={{ x: 64 }}
-              transition={{ duration: 0.55, ease: "easeOut" }}
-            />
-          )}
-        </motion.div>
-        <span className="absolute right-[6px] top-[18px] h-px w-2 bg-[var(--water-vessel-line)]" />
-        <span className="absolute right-[6px] top-[37px] h-px w-3 bg-[var(--water-vessel-line)]" />
-        <span className="absolute right-[6px] top-[56px] h-px w-2 bg-[var(--water-vessel-line)]" />
-      </div>
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      <motion.div
+        className="absolute inset-0 origin-bottom overflow-hidden bg-gradient-to-t from-[var(--water-card-bottom)] to-[var(--water-card-top)]"
+        initial={false}
+        animate={{ scaleY: progress }}
+        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 72, damping: 17, mass: 0.9 }}
+      >
+        <span className="absolute inset-x-0 top-0 h-px bg-[var(--water-surface)] shadow-[0_-3px_12px_var(--water-surface-glow)]" />
+        <span className="absolute inset-x-0 top-px h-7 bg-gradient-to-b from-white/15 to-transparent" />
+        {pulse > 0 && !reduceMotion && (
+          <motion.span
+            key={pulse}
+            className="absolute inset-y-0 w-16 -skew-x-12 bg-white/20 blur-md"
+            initial={{ x: -80 }}
+            animate={{ x: 440 }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          />
+        )}
+      </motion.div>
     </div>
   );
 }
@@ -182,35 +170,31 @@ function WaterCard({ water, goal, onAdd }: { water: number | null; goal: number;
   const done = ratio >= 1;
   const remaining = Math.max(0, goal - (water ?? 0));
   return (
-    <section className={`${card} h-full overflow-hidden`}>
-      <div className="flex h-full flex-col">
+    <section className={`${card} relative isolate h-full overflow-hidden`}>
+      <WaterLayer level={ratio} pulse={pulse} reduceMotion={reduceMotion} />
+      <div className="relative z-10 flex h-full flex-col">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold tracking-[.12em] text-[#5f7169]">HIDRATAÇÃO</p>
-          <GlassWater size={18} className="text-[#2a8bc8]" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--water-action-line)] bg-[var(--water-action)] px-2.5 py-1 text-[11px] font-bold text-[#176f9f]">
+            <GlassWater size={14} />{Math.round(Math.min(1, ratio) * 100)}%
+          </span>
         </div>
-        <div className="mt-3 flex items-center justify-between gap-5">
-          <div className="min-w-0">
-            <p className="text-3xl font-bold tracking-tight">
-              {water === null ? "..." : <AnimatedNumber value={water / 1000} format={value => `${value.toFixed(1).replace(".", ",")} L`} />}
-            </p>
-            <p className="mt-1 text-xs font-semibold text-[#4f6259]">
-              {Math.round(Math.min(1, ratio) * 100)}% da meta de {(goal / 1000).toFixed(1).replace(".", ",")} L
-            </p>
-            {done ? (
-              <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#087a50]"><CheckCircle2 size={14} />Meta concluída</p>
-            ) : (
-              <p className="mt-3 text-xs text-[#71837b]">Faltam {(remaining / 1000).toFixed(1).replace(".", ",")} L hoje</p>
-            )}
-          </div>
-          <WaterGauge level={ratio} pulse={pulse} reduceMotion={reduceMotion} />
-        </div>
+        <p className="mt-4 text-3xl font-bold tracking-tight">
+          {water === null ? "..." : <AnimatedNumber value={water / 1000} format={value => `${value.toFixed(1).replace(".", ",")} L`} />}
+        </p>
+        <p className="mt-1 text-xs font-semibold text-[#4f6259]">Meta de {(goal / 1000).toFixed(1).replace(".", ",")} L</p>
+        {done ? (
+          <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#087a50]"><CheckCircle2 size={14} />Meta concluída</p>
+        ) : (
+          <p className="mt-3 text-xs text-[#71837b]">Faltam {(remaining / 1000).toFixed(1).replace(".", ",")} L hoje</p>
+        )}
         <div className="mt-auto grid grid-cols-3 gap-2 pt-6">
           {[200, 300, 500].map(amount => (
             <motion.button
               key={amount}
               whileTap={reduceMotion ? undefined : { scale: 0.94 }}
               onClick={() => { setPulse(value => value + 1); onAdd(amount); }}
-              className="rounded-xl border border-[#cce4f2] bg-[#eef8fd] py-2 text-xs font-bold text-[#176f9f] transition hover:border-[#91c8e6] hover:bg-[#e3f3fb]"
+              className="rounded-xl border border-[var(--water-action-line)] bg-[var(--water-action)] py-2 text-xs font-bold text-[#176f9f] shadow-sm backdrop-blur-sm transition hover:border-[#91c8e6] hover:bg-[var(--water-action-hover)]"
             >
               +{amount} ml
             </motion.button>
