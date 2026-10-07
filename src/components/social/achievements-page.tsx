@@ -66,7 +66,7 @@ export function AchievementsPage({ viewer }: { viewer: Viewer }) {
   const level = levelFor(points);
 
   async function share(achievement: Achievement) {
-    const { error } = await createPost(viewer.id, { caption: `Conquistei "${achievement.title}" no Evolink! 🏅`, files: [], visibility: "community", achievementCode: achievement.code });
+    const { error } = await createPost(viewer.id, { caption: `Conquistei "${achievement.title}" no Evolink!`, files: [], visibility: "community", achievementCode: achievement.code });
     if (!error) setShared(achievement.code);
   }
 
@@ -74,28 +74,28 @@ export function AchievementsPage({ viewer }: { viewer: Viewer }) {
 
   return (
     <Shell profile={viewer.role}>
-      <PageTitle kicker="CONQUISTAS" title="Medalhas e nível" text="Cada treino, corrida e check-in conta. As medalhas desbloqueiam molduras para o seu perfil." />
+      <PageTitle kicker="CONQUISTAS" title="Conquistas e nível" text="Cada treino, corrida e check-in conta. Suas conquistas desbloqueiam molduras para o perfil." />
 
       <Reveal index={0} className="relative mt-7 overflow-hidden rounded-3xl bg-gradient-to-br from-[#07352b] via-[#0a5a3e] to-[#087a50] p-6 text-white soft-shadow">
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-[#b8e986]/20 blur-2xl" />
-        <div className="relative flex flex-wrap items-center gap-5">
-          <motion.div initial={reduceMotion ? false : { rotate: -12, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 12 }} className="grid h-20 w-20 place-items-center rounded-3xl bg-white/15 text-3xl font-black">
+        <div className="relative grid grid-cols-[64px_minmax(0,1fr)] items-center gap-4 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:gap-5">
+          <motion.div initial={reduceMotion ? false : { rotate: -12, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 12 }} className="grid h-16 w-16 place-items-center rounded-2xl bg-white/15 text-2xl font-black sm:h-20 sm:w-20 sm:rounded-3xl sm:text-3xl">
             <AnimatedNumber value={level.level} />
           </motion.div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold tracking-[.14em] text-[#b8e986]">NÍVEL {level.level}</p>
             <p className="text-2xl font-bold"><AnimatedNumber value={points} /> pontos</p>
             <div className="mt-3 max-w-md"><ProgressBar value={level.progress} className="bg-[#b8e986]" track="bg-white/20" /></div>
-            <p className="mt-1.5 text-xs text-emerald-100">{level.toNext} pontos para o próximo nível · {earned.size} de {catalog.achievements.length} medalhas</p>
+            <p className="mt-1.5 text-xs text-emerald-100">{level.toNext} pontos para o próximo nível · {earned.size} de {catalog.achievements.length} conquistas</p>
           </div>
-          <Button kind="soft" onClick={() => router.push(`/u/${viewer.id}`)} className="shrink-0"><Sparkles size={16} />Meu perfil</Button>
+          <Button kind="soft" onClick={() => router.push(`/u/${viewer.id}`)} className="col-span-2 justify-center sm:col-span-1"><Sparkles size={16} />Meu perfil</Button>
         </div>
       </Reveal>
 
       {earned.size > 0 && (
-        <Reveal index={1} className="mt-6 overflow-hidden rounded-3xl border border-[#e2ece6] bg-[radial-gradient(circle_at_50%_0%,#ffffff_0%,#eef5f1_70%)] p-6 soft-shadow">
+        <Reveal index={1} className="mt-6 overflow-hidden rounded-3xl border border-[#e2ece6] bg-[var(--card)] p-6 soft-shadow">
           <h2 className="font-bold">Vitrine</h2>
-          <p className="text-xs text-[#71837b]">Suas medalhas mais recentes.</p>
+          <p className="text-xs text-[#71837b]">Suas conquistas mais recentes.</p>
           <div className="mt-5 flex gap-6 overflow-x-auto pb-4 pt-2">
             {catalog.achievements
               .filter(item => earned.has(item.code))

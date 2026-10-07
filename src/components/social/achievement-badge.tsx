@@ -1,13 +1,7 @@
 "use client";
 
-import { ClipboardCheck, Crown, Dumbbell, Flag, Flame, Footprints, Heart, Medal, MessageCircle, Route, Scale, Trophy, Weight } from "lucide-react";
-import { FlatCoin } from "@/components/social/medal-3d";
+import { AchievementEmblem } from "@/components/social/medal-3d";
 import type { Achievement } from "@/lib/social-data";
-
-export const achievementIcons: Record<string, typeof Medal> = {
-  dumbbell: Dumbbell, crown: Crown, weight: Weight, medal: Medal, footprints: Footprints, flag: Flag, trophy: Trophy,
-  route: Route, flame: Flame, clipboard: ClipboardCheck, scale: Scale, message: MessageCircle, heart: Heart,
-};
 
 export const tierStyles: Record<Achievement["tier"], { label: string; badge: string; ring: string; text: string }> = {
   bronze: { label: "Bronze", badge: "bg-gradient-to-br from-[#f3c08f] to-[#a0522d] text-white", ring: "ring-[#e8a066]", text: "text-[#8a4a20]" },
@@ -16,7 +10,7 @@ export const tierStyles: Record<Achievement["tier"], { label: string; badge: str
   diamante: { label: "Diamante", badge: "bg-gradient-to-br from-[#aeefff] via-[#c9b3ff] to-[#7de2ff] text-[#23225a]", ring: "ring-[#9fd8ff]", text: "text-[#4b3fa8]" },
 };
 
-/** Flat coin medal: metal colors when earned, grey with a lock when not. */
+/** Athletic shield: Evolink green when earned, muted with a lock when pending. */
 export function AchievementBadge({ achievement, earned, size = "md" }: { achievement: Pick<Achievement, "icon" | "tier" | "title">; earned: boolean; size?: "sm" | "md" | "lg" }) {
-  return <FlatCoin icon={achievement.icon} tier={achievement.tier} locked={!earned} size={size === "sm" ? 40 : size === "lg" ? 80 : 56} title={achievement.title} />;
+  return <AchievementEmblem icon={achievement.icon} tier={achievement.tier} locked={!earned} size={size === "sm" ? 40 : size === "lg" ? 80 : 56} title={achievement.title} />;
 }

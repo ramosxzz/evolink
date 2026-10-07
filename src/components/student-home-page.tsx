@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
-import { Apple, ArrowRight, CheckCircle2, ClipboardCheck, Clock3, Dumbbell, GlassWater, MessageCircle, TrendingDown, TrendingUp } from "lucide-react";
+import { Apple, ArrowRight, CheckCircle2, ClipboardCheck, Clock3, Dumbbell, Flame, GlassWater, MessageCircle, TrendingDown, TrendingUp, Trophy } from "lucide-react";
 import { Button, Shell } from "@/components/app-shell";
 import { AnimatedNumber, ProgressBar, Reveal } from "@/components/ui/motion";
 import { useCached } from "@/lib/page-cache";
@@ -136,89 +136,81 @@ function WorkoutCard({ data, onOpen }: { data: HomeData | null; onOpen: () => vo
   );
 }
 
-// One sine period drawn twice, so sliding it by half its width loops seamlessly.
-const wavePath = (amplitude: number) => {
-  let d = "M0 20";
-  for (let x = 0; x <= 400; x += 10) d += ` L${x} ${20 + Math.sin((x / 200) * Math.PI * 2) * amplitude}`;
-  return `${d} L400 40 L0 40 Z`;
-};
-const backWave = wavePath(6);
-const frontWave = wavePath(4.5);
-
-/** The card is the glass: water rises to the day's share of the goal. */
-function WaterFill({ level, splash, reduceMotion }: { level: number; splash: number; reduceMotion: boolean }) {
-  // A thin layer stays visible when empty, hinting the card fills up.
-  const height = `${Math.max(0.05, Math.min(1, level)) * 100}%`;
+/** A compact vessel keeps progress visible without turning the entire card into water. */
+function WaterGauge({ level, pulse, reduceMotion }: { level: number; pulse: number; reduceMotion: boolean }) {
+  const progress = Math.max(0.035, Math.min(1, level));
   return (
-    <motion.div
-      aria-hidden
-      className="pointer-events-none absolute inset-x-0 bottom-0 -z-0"
-      initial={false}
-      animate={{ height }}
-      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 55, damping: 11, mass: 1.1 }}
-    >
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, var(--water-1), var(--water-2), var(--water-3))" }} />
-      <motion.div
-        key={splash}
-        className="absolute inset-x-0 bottom-full h-5 origin-bottom"
-        initial={reduceMotion || !splash ? false : { scaleY: 2.4 }}
-        animate={{ scaleY: 1 }}
-        transition={{ type: "spring", stiffness: 120, damping: 7 }}
-      >
-        <motion.svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute bottom-0 left-0 h-full w-[200%]"
-          animate={reduceMotion ? undefined : { x: ["0%", "-50%"] }} transition={{ duration: 7, repeat: Infinity, ease: "linear" }}>
-          <path d={backWave} fill="var(--wave-back)" fillOpacity="0.7" />
-        </motion.svg>
-        <motion.svg viewBox="0 0 400 40" preserveAspectRatio="none" className="absolute -bottom-px left-0 h-[85%] w-[200%]"
-          animate={reduceMotion ? undefined : { x: ["-50%", "0%"] }} transition={{ duration: 4.5, repeat: Infinity, ease: "linear" }}>
-          <path d={frontWave} fill="var(--wave-front)" fillOpacity="0.95" />
-        </motion.svg>
-      </motion.div>
-      {!reduceMotion && splash > 0 && (
-        <div key={`bubbles-${splash}`} className="absolute inset-0 overflow-hidden">
-          {[14, 32, 51, 68, 86].map((left, index) => (
-            <motion.span
-              key={left}
-              className="absolute bottom-2 rounded-full border border-white/80 bg-white/40"
-              style={{ left: `${left}%`, width: 5 + (index % 3) * 3, height: 5 + (index % 3) * 3 }}
-              initial={{ y: 0, opacity: 0 }}
-              animate={{ y: -90 - index * 12, opacity: [0, 1, 0] }}
-              transition={{ duration: 1.4 + index * 0.15, delay: index * 0.08, ease: "easeOut" }}
-            />
-          ))}
-        </div>
+    <div aria-hidden className="relative grid h-[92px] w-[58px] shrink-0 place-items-center">
+      {pulse > 0 && !reduceMotion && (
+        <motion.span
+          key={pulse}
+          className="absolute inset-1 rounded-[22px] border border-[#58aee8]/55"
+          initial={{ scale: 0.86, opacity: 0.75 }}
+          animate={{ scale: 1.26, opacity: 0 }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        />
       )}
-    </motion.div>
+      <div className="relative h-[86px] w-[48px] overflow-hidden rounded-[19px] border border-[var(--water-vessel-line)] bg-[var(--water-vessel)] shadow-[inset_0_1px_0_rgba(255,255,255,.5)]">
+        <motion.div
+          className="absolute inset-[4px] origin-bottom overflow-hidden rounded-[14px] bg-gradient-to-t from-[var(--water-fill-bottom)] to-[var(--water-fill-top)]"
+          initial={false}
+          animate={{ scaleY: progress }}
+          transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 105, damping: 18, mass: 0.8 }}
+        >
+          {pulse > 0 && !reduceMotion && (
+            <motion.span
+              key={`shine-${pulse}`}
+              className="absolute inset-y-0 w-5 -skew-x-12 bg-white/30 blur-[2px]"
+              initial={{ x: -28 }}
+              animate={{ x: 64 }}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+            />
+          )}
+        </motion.div>
+        <span className="absolute right-[6px] top-[18px] h-px w-2 bg-[var(--water-vessel-line)]" />
+        <span className="absolute right-[6px] top-[37px] h-px w-3 bg-[var(--water-vessel-line)]" />
+        <span className="absolute right-[6px] top-[56px] h-px w-2 bg-[var(--water-vessel-line)]" />
+      </div>
+    </div>
   );
 }
 
 function WaterCard({ water, goal, onAdd }: { water: number | null; goal: number; onAdd: (amount: number) => void }) {
   const reduceMotion = Boolean(useReducedMotion());
-  const [splash, setSplash] = useState(0);
+  const [pulse, setPulse] = useState(0);
   const ratio = water === null ? 0 : water / goal;
   const done = ratio >= 1;
+  const remaining = Math.max(0, goal - (water ?? 0));
   return (
-    <section className={`${card} relative isolate h-full overflow-hidden`}>
-      <WaterFill level={ratio} splash={splash} reduceMotion={reduceMotion} />
-      <div className="relative z-10 flex h-full flex-col">
+    <section className={`${card} h-full overflow-hidden`}>
+      <div className="flex h-full flex-col">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold tracking-[.12em] text-[#5f7169]">HIDRATAÇÃO</p>
-          <GlassWater size={18} className="text-[#1f6fa8]" />
+          <GlassWater size={18} className="text-[#2a8bc8]" />
         </div>
-        <p className="mt-3 text-3xl font-bold tracking-tight">
-          {water === null ? "–" : <AnimatedNumber value={water / 1000} format={value => `${value.toFixed(1).replace(".", ",")} L`} />}
-        </p>
-        <p className="flex items-center gap-2 text-xs text-[#4f6259]">
-          de {(goal / 1000).toFixed(1).replace(".", ",")} L · {Math.round(Math.min(1, ratio) * 100)}%
-          {done && <span className="inline-flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 font-bold text-[#1f6fa8]"><CheckCircle2 size={12} /> Meta batida</span>}
-        </p>
+        <div className="mt-3 flex items-center justify-between gap-5">
+          <div className="min-w-0">
+            <p className="text-3xl font-bold tracking-tight">
+              {water === null ? "..." : <AnimatedNumber value={water / 1000} format={value => `${value.toFixed(1).replace(".", ",")} L`} />}
+            </p>
+            <p className="mt-1 text-xs font-semibold text-[#4f6259]">
+              {Math.round(Math.min(1, ratio) * 100)}% da meta de {(goal / 1000).toFixed(1).replace(".", ",")} L
+            </p>
+            {done ? (
+              <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#087a50]"><CheckCircle2 size={14} />Meta concluída</p>
+            ) : (
+              <p className="mt-3 text-xs text-[#71837b]">Faltam {(remaining / 1000).toFixed(1).replace(".", ",")} L hoje</p>
+            )}
+          </div>
+          <WaterGauge level={ratio} pulse={pulse} reduceMotion={reduceMotion} />
+        </div>
         <div className="mt-auto grid grid-cols-3 gap-2 pt-6">
           {[200, 300, 500].map(amount => (
             <motion.button
               key={amount}
               whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-              onClick={() => { setSplash(value => value + 1); onAdd(amount); }}
-              className="rounded-xl bg-white/75 py-2 text-xs font-bold text-[#1f6fa8] shadow-[0_1px_2px_rgba(16,41,31,.06)] backdrop-blur-sm transition hover:bg-white/90"
+              onClick={() => { setPulse(value => value + 1); onAdd(amount); }}
+              className="rounded-xl border border-[#cce4f2] bg-[#eef8fd] py-2 text-xs font-bold text-[#176f9f] transition hover:border-[#91c8e6] hover:bg-[#e3f3fb]"
             >
               +{amount} ml
             </motion.button>
@@ -353,14 +345,21 @@ function RewardsCard({ viewerId, onOpen }: { viewerId: string; onOpen: () => voi
         <span className="rounded-full bg-[#07352b] px-2.5 py-1 text-[11px] font-bold text-[#b8e986]">Nível {level.level}</span>
       </div>
       <div className="mt-3 flex items-center gap-4">
-        {state.latest ? <AchievementBadge achievement={state.latest} earned size="sm" /> : <span className="grid h-10 w-10 place-items-center rounded-full bg-[#edf2ef] text-lg">🏅</span>}
+        {state.latest ? (
+          <AchievementBadge achievement={state.latest} earned size="sm" />
+        ) : (
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#edf4f0] text-[#087a50]">
+            <Trophy size={18} />
+          </span>
+        )}
         <div className="min-w-0">
-          <p className="truncate font-bold">{state.latest ? state.latest.title : "Primeira medalha te espera"}</p>
-          <p className="text-xs text-[#71837b]">{state.count} medalhas · {state.points} pontos</p>
+          <p className="truncate font-bold">{state.latest ? state.latest.title : "Sua primeira conquista te espera"}</p>
+          <p className="text-xs text-[#71837b]">{state.count} {state.count === 1 ? "conquista" : "conquistas"} · {state.points} pontos</p>
         </div>
       </div>
-      <p className={`mt-4 text-sm font-bold ${state.streak >= 3 ? "text-[#d98a00]" : "text-[#52665e]"}`}>
-        🔥 {state.streak} {state.streak === 1 ? "dia" : "dias"} em sequência
+      <p className={`mt-4 inline-flex items-center gap-1.5 text-sm font-bold ${state.streak >= 3 ? "text-[#d17918]" : "text-[#52665e]"}`}>
+        <Flame size={16} aria-hidden />
+        {state.streak} {state.streak === 1 ? "dia" : "dias"} em sequência
       </p>
       <div className="mt-2"><ProgressBar value={level.progress} className="bg-gradient-to-r from-[#087a50] to-[#b8e986]" /></div>
     </button>
